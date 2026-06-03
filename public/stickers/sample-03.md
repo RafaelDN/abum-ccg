@@ -1,0 +1,1 @@
+Uma imagem fala mais que mil palavras de protesto e abraços em árvores.

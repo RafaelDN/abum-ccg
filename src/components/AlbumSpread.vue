@@ -24,16 +24,13 @@ const modalTiltY = ref(0)
 const isTiltingSticker = ref(false)
 const coverLogo = `${import.meta.env.BASE_URL}logo-co-gole.svg`
 
-const leftPage = computed(() => props.pages[currentPageIndex.value])
-const rightPage = computed(() => props.pages[currentPageIndex.value + 1])
-const hasRightPage = computed(() => Boolean(rightPage.value))
-const pageRange = computed(() => {
-  if (!rightPage.value) return `${leftPage.value.number}`
-
-  return `${leftPage.value.number}-${rightPage.value.number}`
+const currentPage = computed(() => props.pages[currentPageIndex.value])
+const canGoBack = computed(() => isAlbumOpen.value && currentPageIndex.value > 0)
+const canGoForward = computed(() => !isAlbumOpen.value || currentPageIndex.value + 1 < props.pages.length)
+const pageCounter = computed(() => {
+  if (!isAlbumOpen.value || !currentPage.value) return 'Capa'
+  return `${currentPage.value.number} / ${props.pages.length}`
 })
-const canGoBack = computed(() => isAlbumOpen.value)
-const canGoForward = computed(() => !isAlbumOpen.value || currentPageIndex.value + 2 < props.pages.length)
 const coverDragProgress = computed(() => {
   const maxDrag = 220
   const clamped = Math.max(-maxDrag, Math.min(0, coverDragX.value))
@@ -56,11 +53,11 @@ const dragProgress = computed(() => {
 
   return clamped / maxDrag
 })
-const turningPageStyle = computed(() => {
+const pageStyle = computed(() => {
   if (!isDragging.value) return {}
 
   const progress = dragProgress.value
-  const rotation = progress < 0 ? progress * 44 : progress * 34
+  const rotation = progress * 38
   const lift = Math.abs(progress) * 10
 
   return {
@@ -83,19 +80,19 @@ function goToPreviousSpread() {
   }
 
   direction.value = 'previous'
-  currentPageIndex.value = Math.max(0, currentPageIndex.value - 2)
+  currentPageIndex.value = Math.max(0, currentPageIndex.value - 1)
 }
 
 function goToNextSpread() {
   if (!canGoForward.value) return
 
-  if(currentPageIndex.value <= 0){
-    openAlbum();
-    return;
+  if (!isAlbumOpen.value) {
+    openAlbum()
+    return
   }
 
   direction.value = 'next'
-  currentPageIndex.value += 2
+  currentPageIndex.value += 1
 }
 
 function openAlbum() {
@@ -226,14 +223,14 @@ function resetModalTilt() {
   <section class="album">
     <div class="album__header">
       <div>
-        <p class="album__eyebrow">Album compromisso - 2026</p>        
+        <p class="album__eyebrow">Album compromisso - 2026</p>
       </div>
 
       <div class="album-controls" aria-label="Navegacao de paginas">
         <button type="button" :disabled="!canGoBack" aria-label="Pagina anterior" @click="goToPreviousSpread">
           <span aria-hidden="true">&lt;</span>
         </button>
-        <output>{{ isAlbumOpen ? `${pageRange} / ${pages.length}` : 'Capa' }}</output>
+        <output>{{ pageCounter }}</output>
         <button type="button" :disabled="!canGoForward" aria-label="Proxima pagina" @click="goToNextSpread">
           <span aria-hidden="true">&gt;</span>
         </button>
@@ -253,15 +250,15 @@ function resetModalTilt() {
         @pointerup="finishCoverDrag"
         @pointercancel="finishCoverDrag"
       >
-      <p class="album__title">Album compromisso - 2026</p>        
+        <p class="album__title">Album compromisso - 2026</p>
         <img :src="coverLogo" alt="Co Gole" />
       </button>
 
       <div
         v-else
-        class="spread-shell"
+        :key="`${currentPageIndex}-${direction}`"
+        class="spread-shell spread-shell--page"
         :class="{
-          'spread-shell--single': !hasRightPage,
           'spread-shell--dragging': isDragging,
           'turn-next': !isDragging && direction === 'next',
           'turn-previous': !isDragging && direction === 'previous',
@@ -271,25 +268,15 @@ function resetModalTilt() {
         @pointerup="finishDrag"
         @pointercancel="finishDrag"
       >
-        <article class="album-page album-page--spread album-page--left">
-          <div class="album-page__topline">
-            <span>{{ leftPage.title }}</span>
-            <!-- <span>Esquerda</span> -->
-          </div>
-          <StickerGrid :stickers="leftPage.stickers" compact @select="openSticker" />
-        </article>
-
         <article
-          v-if="rightPage"
-          :key="rightPage.number"
-          class="album-page album-page--spread album-page--right"
-          :style="turningPageStyle"
+          v-if="currentPage"
+          class="album-page album-page--spread album-page--single"
+          :style="pageStyle"
         >
           <div class="album-page__topline">
-            <span>{{ rightPage.title }}</span>
-            <!-- <span>Direita</span> -->
+            <span>{{ currentPage.title }}</span>
           </div>
-          <StickerGrid :stickers="rightPage.stickers" compact @select="openSticker" />
+          <StickerGrid :stickers="currentPage.stickers" compact @select="openSticker" />
         </article>
       </div>
     </div>

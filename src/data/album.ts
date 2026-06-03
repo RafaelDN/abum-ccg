@@ -29,6 +29,13 @@ const sampleStickers: Sticker[] = [
     description: publicAsset('stickers/sample-02.md'),
     status: 'ready',
   },
+  {
+    id: 'sample-03',
+    title: 'Rubão 13',
+    image: publicAsset('stickers/sample-03.png'),
+    description: publicAsset('stickers/sample-03.md'),
+    status: 'ready',
+  }
 ]
 
 function createPlaceholder(pageNumber: number, stickerNumber: number): Sticker {
