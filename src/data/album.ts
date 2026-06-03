@@ -12,19 +12,21 @@ export type AlbumPage = {
   stickers: Sticker[]
 }
 
+const publicAsset = (path: string) => `${import.meta.env.BASE_URL}${path}`
+
 const sampleStickers: Sticker[] = [
   {
     id: 'sample-01',
-    title: 'Figurinha 01',
-    image: '/stickers/sample-01.jpeg',
-    description: '/stickers/sample-01.md',
+    title: 'Nego na copa',
+    image: publicAsset('stickers/sample-01.jpeg'),
+    description: publicAsset('stickers/sample-01.md'),
     status: 'ready',
   },
   {
     id: 'sample-02',
-    title: 'Figurinha 02',
-    image: '/stickers/sample-02.jpeg',
-    description: '/stickers/sample-02.md',
+    title: 'Jeff Crash',
+    image: publicAsset('stickers/sample-02.jpeg'),
+    description: publicAsset('stickers/sample-02.md'),
     status: 'ready',
   },
 ]

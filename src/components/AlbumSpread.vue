@@ -22,6 +22,7 @@ const descriptionContent = ref('')
 const modalTiltX = ref(0)
 const modalTiltY = ref(0)
 const isTiltingSticker = ref(false)
+const coverLogo = `${import.meta.env.BASE_URL}logo-co-gole.svg`
 
 const leftPage = computed(() => props.pages[currentPageIndex.value])
 const rightPage = computed(() => props.pages[currentPageIndex.value + 1])
@@ -32,7 +33,7 @@ const pageRange = computed(() => {
   return `${leftPage.value.number}-${rightPage.value.number}`
 })
 const canGoBack = computed(() => isAlbumOpen.value)
-const canGoForward = computed(() => isAlbumOpen.value && currentPageIndex.value + 2 < props.pages.length)
+const canGoForward = computed(() => !isAlbumOpen.value || currentPageIndex.value + 2 < props.pages.length)
 const coverDragProgress = computed(() => {
   const maxDrag = 220
   const clamped = Math.max(-maxDrag, Math.min(0, coverDragX.value))
@@ -87,6 +88,12 @@ function goToPreviousSpread() {
 
 function goToNextSpread() {
   if (!canGoForward.value) return
+
+  if(currentPageIndex.value <= 0){
+    openAlbum();
+    return;
+  }
+
   direction.value = 'next'
   currentPageIndex.value += 2
 }
@@ -219,8 +226,7 @@ function resetModalTilt() {
   <section class="album">
     <div class="album__header">
       <div>
-        <p class="album__eyebrow">Album digital publico</p>
-        <h1>Album CCG</h1>
+        <p class="album__eyebrow">Album compromisso - 2026</p>        
       </div>
 
       <div class="album-controls" aria-label="Navegacao de paginas">
@@ -247,7 +253,8 @@ function resetModalTilt() {
         @pointerup="finishCoverDrag"
         @pointercancel="finishCoverDrag"
       >
-        <img src="/logo-co-gole.svg" alt="Co Gole" />
+      <p class="album__title">Album compromisso - 2026</p>        
+        <img :src="coverLogo" alt="Co Gole" />
       </button>
 
       <div
@@ -267,7 +274,7 @@ function resetModalTilt() {
         <article class="album-page album-page--spread album-page--left">
           <div class="album-page__topline">
             <span>{{ leftPage.title }}</span>
-            <span>Esquerda</span>
+            <!-- <span>Esquerda</span> -->
           </div>
           <StickerGrid :stickers="leftPage.stickers" compact @select="openSticker" />
         </article>
@@ -280,7 +287,7 @@ function resetModalTilt() {
         >
           <div class="album-page__topline">
             <span>{{ rightPage.title }}</span>
-            <span>Direita</span>
+            <!-- <span>Direita</span> -->
           </div>
           <StickerGrid :stickers="rightPage.stickers" compact @select="openSticker" />
         </article>

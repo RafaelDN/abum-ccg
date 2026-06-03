@@ -31,11 +31,22 @@ button {
   display: grid;
   gap: 16px;
   margin-bottom: 18px;
+  justify-content: center;
 }
 
 .album__eyebrow {
   margin: 0 0 8px;
   color: #65716f;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.album__title {
+  margin: 0;
+  padding: 0;
+  color: #eef0ef;
   font-size: 0.76rem;
   font-weight: 800;
   letter-spacing: 0.08em;

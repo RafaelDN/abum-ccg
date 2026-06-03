@@ -1,3 +1,1 @@
-# Figurinha 01
-
-Descricao inicial da figurinha 01. Este conteudo vem de `sample-01.md`, com o mesmo nome base da imagem `sample-01.jpeg`.
+Após boas temporadas 2025/2026, Nego foi notado pelo técnico Lancegole e foi chamado pra vestir a 10
