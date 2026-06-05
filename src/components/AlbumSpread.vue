@@ -1,8 +1,20 @@
 <script setup lang="ts">
 import { computed, markRaw, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
-import { PageFlip, type FlipSetting } from 'page-flip'
+import type { FlipSetting, PageFlip } from 'page-flip'
 import type { AlbumPage, Sticker } from '../data/album'
 import StickerGrid from './StickerGrid.vue'
+
+type PageFlipConstructor = new (
+  parent: HTMLElement,
+  settings: Partial<FlipSetting>,
+) => PageFlip
+
+type PageFlipModule = {
+  PageFlip?: PageFlipConstructor
+  default?: {
+    PageFlip?: PageFlipConstructor
+  }
+}
 
 type BookPage =
   | {
@@ -106,13 +118,22 @@ function getBookPages(): HTMLElement[] {
   return Array.from(bookRoot.querySelectorAll<HTMLElement>('.album-book__page'))
 }
 
-function bindPageFlip() {
+async function resolvePageFlipConstructor(): Promise<PageFlipConstructor | null> {
+  const pageFlipModule = (await import('page-flip')) as unknown as PageFlipModule
+
+  return pageFlipModule.PageFlip ?? pageFlipModule.default?.PageFlip ?? null
+}
+
+async function bindPageFlip() {
   if (pageFlip.value || !albumBookRef.value) return
 
   const pages = getBookPages()
   if (pages.length === 0) return
 
-  const instance = markRaw(new PageFlip(albumBookRef.value, pageFlipSettings))
+  const PageFlipConstructor = await resolvePageFlipConstructor()
+  if (!PageFlipConstructor || pageFlip.value || !albumBookRef.value) return
+
+  const instance = markRaw(new PageFlipConstructor(albumBookRef.value, pageFlipSettings))
   instance.on('flip', ({ data }) => {
     currentPageIndex.value = Number(data)
   })
@@ -210,7 +231,7 @@ function resetModalTilt() {
 }
 
 onMounted(() => {
-  bindPageFlip()
+  void bindPageFlip()
 })
 
 onBeforeUnmount(() => {

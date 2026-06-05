@@ -64,4 +64,10 @@ declare module 'page-flip' {
     getOrientation(): 'portrait' | 'landscape'
     getSettings(): FlipSetting
   }
+
+  const pageFlip: {
+    PageFlip: typeof PageFlip
+  }
+
+  export default pageFlip
 }
