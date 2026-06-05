@@ -8,13 +8,18 @@
   text-rendering: optimizeLegibility;
 }
 
+html,
+body {
+  overflow-x: hidden;
+}
+
 * {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  min-width: 320px;
+  min-width: 0;
 }
 
 button {
@@ -22,9 +27,10 @@ button {
 }
 
 .app-shell {
-  width: min(100% - 20px, 1180px);
+  width: 100%;
+  max-width: 1180px;
   margin: 0 auto;
-  padding: 24px 0 40px;
+  padding: 14px 6px 32px;
 }
 
 .album__header {
@@ -103,8 +109,9 @@ button {
   display: grid;
   min-height: calc(100svh - 170px);
   place-items: center;
-  overflow: hidden;
-  padding: 14px 0;
+  overflow-x: clip;
+  overflow-y: visible;
+  padding: 10px 0;
   border: 1px solid #ded6c5;
   border-radius: 8px;
   background:
@@ -115,72 +122,26 @@ button {
   perspective: 1400px;
 }
 
-.album-cover {
-  display: grid;
-  width: min(360px, 82vw);
-  aspect-ratio: 0.74 / 1;
-  place-items: center;
-  padding: 34px;
-  border: 1px solid #232b2c;
-  border-radius: 8px;
-  background:
-    linear-gradient(135deg, rgb(255 255 255 / 0.12), transparent 36%),
-    #243234;
-  box-shadow:
-    0 28px 54px rgb(35 32 24 / 0.28),
-    inset 10px 0 0 rgb(0 0 0 / 0.18);
-  cursor: pointer;
-  touch-action: pan-y;
-  transform-origin: left center;
-  transition:
-    transform 180ms ease,
-    box-shadow 180ms ease;
-}
-
-.album-cover--dragging {
-  cursor: grabbing;
-  transition: none;
-}
-
-.album-cover:hover {
-  transform: rotateY(-6deg) translateY(-3px);
-  box-shadow:
-    0 34px 64px rgb(35 32 24 / 0.32),
-    inset 10px 0 0 rgb(0 0 0 / 0.18);
-}
-
-.album-cover:focus-visible {
-  outline: 3px solid #2f7e87;
-  outline-offset: 5px;
-}
-
-.album-cover img {
-  width: min(260px, 74%);
-  height: auto;
-  pointer-events: none;
-}
-
-.spread-shell {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0;
-  width: min(440px, 94vw);
-  padding: 12px;
-  border-radius: 8px;
-  background: #3c3430;
-  box-shadow: 0 24px 48px rgb(35 32 24 / 0.25);
-  cursor: grab;
-  touch-action: pan-y;
+.album-book {
+  display: none;
+  width: 100%;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  background-size: cover;
+  box-shadow: 0 0 20px 0 rgb(0 0 0 / 0.42);
   user-select: none;
 }
 
-.spread-shell--dragging {
-  cursor: grabbing;
+.album-book .stf__wrapper {
+  width: 100%;
+  max-width: 100%;
 }
 
-.album-page {
+.album-book__page {
   width: 100%;
-  padding: 14px;
+  height: 100%;
+  padding: 10px;
+  overflow: hidden;
   border: 1px solid #d5c6a8;
   border-radius: 4px;
   background:
@@ -189,35 +150,99 @@ button {
   box-shadow: none;
 }
 
-.album-page--single {
-  transform-origin: center center;
-  transition: transform 180ms ease;
+.album-book__page.--left {
+  border-right: 0;
+  box-shadow: inset -7px 0 30px -7px rgb(0 0 0 / 0.42);
 }
 
-.spread-shell--dragging .album-page--single {
-  transition: none;
+.album-book__page.--right {
+  border-left: 0;
+  box-shadow: inset 7px 0 30px -7px rgb(0 0 0 / 0.42);
+}
+
+.album-book__page.--hard {
+  border-color: #6f604c;
+}
+
+.album-book__page-content {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  min-height: 0;
+}
+
+.album-book__page--cover,
+.album-book__page--back {
+  background:
+    linear-gradient(135deg, rgb(255 255 255 / 0.12), transparent 34%),
+    #243234;
+  border-color: #232b2c;
+  color: #f7f2e7;
+}
+
+.album-book__cover,
+.album-book__back-cover {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 14px;
+  min-height: 100%;
+  padding: 10px;
+  text-align: center;
+}
+
+.album-book__cover img {
+  width: min(220px, 70%);
+  height: auto;
+  pointer-events: none;
+}
+
+.album-book__subtitle {
+  margin: 0;
+  color: rgb(247 242 231 / 0.8);
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1.5;
 }
 
 .album-page__topline {
   display: flex;
+  flex: 0 0 auto;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   color: #6a655c;
   font-size: 0.74rem;
   font-weight: 800;
   text-transform: uppercase;
 }
 
+.album-book__page .sticker-grid {
+  flex: 1 1 auto;
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  height: auto;
+  min-height: 0;
+}
+
+.album-book__page .sticker-card {
+  height: 100%;
+  aspect-ratio: auto;
+  min-height: 0;
+}
+
 .sticker-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: 6px;
 }
 
 .sticker-card {
   display: grid;
-  grid-template-rows: minmax(0, 1fr) 30px;
+  grid-template-rows: minmax(0, 1fr) 24px;
   aspect-ratio: 0.72 / 1;
   min-width: 0;
   margin: 0;
@@ -252,10 +277,10 @@ button {
 }
 
 .sticker-card figcaption {
-  padding: 7px 6px;
+  padding: 5px 4px;
   overflow: hidden;
   color: #283234;
-  font-size: 0.72rem;
+  font-size: 0.66rem;
   font-weight: 800;
   text-align: center;
   text-overflow: ellipsis;
@@ -333,9 +358,11 @@ button {
 }
 
 .sticker-modal__figure {
+  position: relative;
   display: grid;
   min-height: 330px;
   place-items: center;
+  isolation: isolate;
   border-radius: 8px;
   background:
     radial-gradient(circle at 50% 22%, rgb(255 255 255 / 0.74), transparent 36%),
@@ -343,7 +370,24 @@ button {
   perspective: 900px;
 }
 
+.sticker-modal__figure::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 34px;
+  z-index: 0;
+  width: min(240px, 62%);
+  height: 28px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgb(34 29 21 / 0.34) 0%, rgb(34 29 21 / 0.12) 42%, transparent 74%);
+  filter: blur(12px);
+  transform: translateX(-50%) scale(0.95);
+  animation: floatingShadow 4.8s ease-in-out infinite;
+}
+
 .sticker-modal__tilt {
+  position: relative;
+  z-index: 1;
   width: min(270px, 72vw);
   aspect-ratio: 0.72 / 1;
   overflow: hidden;
@@ -351,7 +395,7 @@ button {
   border-radius: 8px;
   background: #f6efe2;
   box-shadow:
-    0 24px 42px rgb(34 29 21 / 0.28),
+    0 30px 54px rgb(34 29 21 / 0.34),
     0 0 0 8px rgb(255 250 240 / 0.62);
   transform-style: preserve-3d;
   transition: transform 140ms ease;
@@ -387,36 +431,6 @@ button {
   white-space: pre-wrap;
 }
 
-.turn-next {
-  animation: turnNext 360ms ease both;
-}
-
-.turn-previous {
-  animation: turnPrevious 360ms ease both;
-}
-
-@keyframes turnNext {
-  from {
-    opacity: 0.72;
-    transform: rotateY(-10deg) translateX(16px);
-  }
-  to {
-    opacity: 1;
-    transform: rotateY(0deg) translateX(0);
-  }
-}
-
-@keyframes turnPrevious {
-  from {
-    opacity: 0.72;
-    transform: rotateY(10deg) translateX(-16px);
-  }
-  to {
-    opacity: 1;
-    transform: rotateY(0deg) translateX(0);
-  }
-}
-
 @keyframes floatingSticker {
   0%,
   100% {
@@ -427,10 +441,21 @@ button {
   }
 }
 
+@keyframes floatingShadow {
+  0%,
+  100% {
+    opacity: 0.8;
+    transform: translateX(-50%) scale(0.95);
+  }
+  50% {
+    opacity: 0.55;
+    transform: translateX(-50%) scale(0.72);
+  }
+}
+
 @media (min-width: 640px) {
   .app-shell {
-    width: min(100% - 32px, 1180px);
-    padding-top: 34px;
+    padding: 34px 16px 40px;
   }
 
   .album__header {
@@ -450,26 +475,7 @@ button {
     padding: 18px 0;
   }
 
-  .album-cover {
-    width: min(520px, 82vw);
-    padding: 48px;
-    box-shadow:
-      0 34px 70px rgb(35 32 24 / 0.3),
-      inset 12px 0 0 rgb(0 0 0 / 0.18);
-  }
-
-  .album-cover:hover {
-    transform: rotateY(-8deg) translateY(-4px);
-    box-shadow:
-      0 42px 78px rgb(35 32 24 / 0.34),
-      inset 12px 0 0 rgb(0 0 0 / 0.18);
-  }
-
-  .album-cover img {
-    width: min(320px, 74%);
-  }
-
-  .album-page {
+  .album-book__page {
     padding: 20px;
   }
 
@@ -492,17 +498,8 @@ button {
 }
 
 @media (min-width: 900px) {
-  .spread-shell {
-    width: min(620px, 72vw);
-    padding: 18px;
-  }
-
-  .album-page {
+  .album-book__page {
     padding: 24px;
-  }
-
-  .album-page--single {
-    border-radius: 4px;
   }
 
   .sticker-modal {

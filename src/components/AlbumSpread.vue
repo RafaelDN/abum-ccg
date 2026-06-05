@@ -1,68 +1,95 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, markRaw, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
+import { PageFlip, type FlipSetting } from 'page-flip'
 import type { AlbumPage, Sticker } from '../data/album'
 import StickerGrid from './StickerGrid.vue'
+
+type BookPage =
+  | {
+      key: string
+      kind: 'cover'
+      density: 'hard'
+      title: string
+      subtitle: string
+    }
+  | {
+      key: string
+      kind: 'content'
+      density: 'soft'
+      page: AlbumPage
+    }
+  | {
+      key: string
+      kind: 'back'
+      density: 'hard'
+      title: string
+      subtitle: string
+    }
 
 const props = defineProps<{
   pages: AlbumPage[]
 }>()
 
-const isAlbumOpen = ref(false)
 const currentPageIndex = ref(0)
-const direction = ref<'next' | 'previous'>('next')
-const coverDragStartX = ref(0)
-const coverDragX = ref(0)
-const isDraggingCover = ref(false)
-const suppressCoverClick = ref(false)
-const dragStartX = ref(0)
-const dragX = ref(0)
-const isDragging = ref(false)
+const pageCount = ref(0)
 const selectedSticker = ref<Sticker | null>(null)
 const descriptionContent = ref('')
 const modalTiltX = ref(0)
 const modalTiltY = ref(0)
 const isTiltingSticker = ref(false)
+const albumBookRef = ref<HTMLElement | null>(null)
+const pageFlip = shallowRef<PageFlip | null>(null)
 const coverLogo = `${import.meta.env.BASE_URL}logo-co-gole.svg`
 
-const currentPage = computed(() => props.pages[currentPageIndex.value])
-const canGoBack = computed(() => isAlbumOpen.value && currentPageIndex.value > 0)
-const canGoForward = computed(() => !isAlbumOpen.value || currentPageIndex.value + 1 < props.pages.length)
+const pageFlipSettings = {
+  width: 550,
+  height: 733,
+  size: 'stretch',
+  minWidth: 200,
+  maxWidth: 560,
+  minHeight: 347,
+  maxHeight: 746,
+  maxShadowOpacity: 0.5,
+  showCover: true,
+  mobileScrollSupport: false,
+  disableFlipByClick: true,
+} satisfies Partial<FlipSetting>
+
+const bookPages = computed<BookPage[]>(() => {
+  const contentPages = props.pages.map(
+    (page): BookPage => ({
+      key: `page-${page.number}`,
+      kind: 'content',
+      density: 'soft',
+      page,
+    }),
+  )
+
+  return [
+    {
+      key: 'cover',
+      kind: 'cover',
+      density: 'hard',
+      title: 'Album compromisso - 2026',
+      subtitle: 'Abra para virar as paginas',
+    },
+    ...contentPages,
+    {
+      key: 'back-cover',
+      kind: 'back',
+      density: 'hard',
+      title: 'Fim do album',
+      subtitle: 'Volte para rever as figurinhas',
+    },
+  ]
+})
+
+const canGoBack = computed(() => currentPageIndex.value > 0)
+const canGoForward = computed(() => currentPageIndex.value < pageCount.value - 1)
 const pageCounter = computed(() => {
-  if (!isAlbumOpen.value || !currentPage.value) return 'Capa'
-  return `${currentPage.value.number} / ${props.pages.length}`
-})
-const coverDragProgress = computed(() => {
-  const maxDrag = 220
-  const clamped = Math.max(-maxDrag, Math.min(0, coverDragX.value))
-
-  return Math.abs(clamped) / maxDrag
-})
-const coverStyle = computed(() => {
-  if (!isDraggingCover.value) return {}
-
-  const rotation = coverDragProgress.value * -36
-  const lift = coverDragProgress.value * 8
-
-  return {
-    transform: `translateY(${-lift}px) rotateY(${rotation}deg)`,
-  }
-})
-const dragProgress = computed(() => {
-  const maxDrag = 220
-  const clamped = Math.max(-maxDrag, Math.min(maxDrag, dragX.value))
-
-  return clamped / maxDrag
-})
-const pageStyle = computed(() => {
-  if (!isDragging.value) return {}
-
-  const progress = dragProgress.value
-  const rotation = progress * 38
-  const lift = Math.abs(progress) * 10
-
-  return {
-    transform: `translateY(${-lift}px) rotateY(${rotation}deg)`,
-  }
+  if (currentPageIndex.value === 0) return 'Capa'
+  if (currentPageIndex.value === pageCount.value - 1) return 'Contracapa'
+  return `${currentPageIndex.value} / ${props.pages.length}`
 })
 const modalStickerStyle = computed(() => {
   if (!isTiltingSticker.value) return {}
@@ -72,107 +99,71 @@ const modalStickerStyle = computed(() => {
   }
 })
 
-function goToPreviousSpread() {
-  if (!isAlbumOpen.value) return
-  if (currentPageIndex.value === 0) {
-    closeAlbum()
-    return
-  }
+function getBookPages(): HTMLElement[] {
+  const bookRoot = albumBookRef.value
+  if (!bookRoot) return []
 
-  direction.value = 'previous'
-  currentPageIndex.value = Math.max(0, currentPageIndex.value - 1)
+  return Array.from(bookRoot.querySelectorAll<HTMLElement>('.album-book__page'))
+}
+
+function bindPageFlip() {
+  if (pageFlip.value || !albumBookRef.value) return
+
+  const pages = getBookPages()
+  if (pages.length === 0) return
+
+  const instance = markRaw(new PageFlip(albumBookRef.value, pageFlipSettings))
+  instance.on('flip', ({ data }) => {
+    currentPageIndex.value = Number(data)
+  })
+  instance.on('init', ({ data }) => {
+    currentPageIndex.value = Number(data.page)
+    pageCount.value = instance.getPageCount()
+  })
+
+  pageFlip.value = instance
+  instance.loadFromHTML(pages)
+  pageCount.value = instance.getPageCount()
+}
+
+function flipToBookPage(pageIndex: number) {
+  if (!pageFlip.value) return
+
+  const nextPageIndex = Math.max(0, Math.min(pageIndex, pageCount.value - 1))
+  const settings = pageFlip.value.getSettings()
+  const previousDisableFlipByClick = settings.disableFlipByClick
+
+  settings.disableFlipByClick = false
+  pageFlip.value.flip(nextPageIndex, 'top')
+  settings.disableFlipByClick = previousDisableFlipByClick
+}
+
+function goToPreviousSpread() {
+  if (!pageFlip.value) return
+
+  const currentIndex = pageFlip.value.getCurrentPageIndex()
+  const previousIndex =
+    pageFlip.value.getOrientation() === 'portrait'
+      ? currentIndex - 1
+      : currentIndex <= 1
+        ? 0
+        : currentIndex - 2
+
+  flipToBookPage(previousIndex)
 }
 
 function goToNextSpread() {
-  if (!canGoForward.value) return
+  if (!pageFlip.value) return
 
-  if (!isAlbumOpen.value) {
-    openAlbum()
-    return
-  }
+  const currentIndex = pageFlip.value.getCurrentPageIndex()
+  const nextIndex =
+    pageFlip.value.getOrientation() === 'portrait'
+      ? currentIndex + 1
+      : currentIndex === 0
+        ? 1
+        : currentIndex + 2
 
-  direction.value = 'next'
-  currentPageIndex.value += 1
-}
-
-function openAlbum() {
-  isAlbumOpen.value = true
-  direction.value = 'next'
-  currentPageIndex.value = 0
-  isDraggingCover.value = false
-  coverDragX.value = 0
-}
-
-function onCoverClick() {
-  if (suppressCoverClick.value) {
-    suppressCoverClick.value = false
-    return
-  }
-
-  openAlbum()
-}
-
-function closeAlbum() {
-  isAlbumOpen.value = false
-  direction.value = 'previous'
-  currentPageIndex.value = 0
-}
-
-function onCoverPointerDown(event: PointerEvent) {
-  if (event.button !== 0 && event.pointerType === 'mouse') return
-
-  isDraggingCover.value = true
-  coverDragStartX.value = event.clientX
-  coverDragX.value = 0
-  ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
-}
-
-function onCoverPointerMove(event: PointerEvent) {
-  if (!isDraggingCover.value) return
-  coverDragX.value = event.clientX - coverDragStartX.value
-}
-
-function finishCoverDrag(event: PointerEvent) {
-  if (!isDraggingCover.value) return
-
-  const shouldOpen = coverDragX.value < -54
-  suppressCoverClick.value = Math.abs(coverDragX.value) > 6
-
-  isDraggingCover.value = false
-  coverDragX.value = 0
-  ;(event.currentTarget as HTMLElement).releasePointerCapture(event.pointerId)
-
-  if (shouldOpen) openAlbum()
-}
-
-function onPointerDown(event: PointerEvent) {
-  if (event.button !== 0 && event.pointerType === 'mouse') return
-  if ((event.target as HTMLElement).closest('[data-sticker-action]')) return
-
-  isDragging.value = true
-  dragStartX.value = event.clientX
-  dragX.value = 0
-  ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
-}
-
-function onPointerMove(event: PointerEvent) {
-  if (!isDragging.value) return
-  dragX.value = event.clientX - dragStartX.value
-}
-
-function finishDrag(event: PointerEvent) {
-  if (!isDragging.value) return
-
-  const threshold = 72
-  const shouldGoNext = dragX.value < -threshold
-  const shouldGoBack = dragX.value > threshold
-
-  isDragging.value = false
-  dragX.value = 0
-  ;(event.currentTarget as HTMLElement).releasePointerCapture(event.pointerId)
-
-  if (shouldGoNext) goToNextSpread()
-  if (shouldGoBack) goToPreviousSpread()
+  flipToBookPage(nextIndex)
 }
 
 async function openSticker(sticker: Sticker) {
@@ -217,6 +208,15 @@ function resetModalTilt() {
   modalTiltY.value = 0
   isTiltingSticker.value = false
 }
+
+onMounted(() => {
+  bindPageFlip()
+})
+
+onBeforeUnmount(() => {
+  pageFlip.value?.destroy()
+  pageFlip.value = null
+})
 </script>
 
 <template>
@@ -238,45 +238,36 @@ function resetModalTilt() {
     </div>
 
     <div class="album-stage">
-      <button
-        v-if="!isAlbumOpen"
-        class="album-cover"
-        :class="{ 'album-cover--dragging': isDraggingCover }"
-        :style="coverStyle"
-        type="button"
-        @click="onCoverClick"
-        @pointerdown="onCoverPointerDown"
-        @pointermove="onCoverPointerMove"
-        @pointerup="finishCoverDrag"
-        @pointercancel="finishCoverDrag"
-      >
-        <p class="album__title">Album compromisso - 2026</p>
-        <img :src="coverLogo" alt="Co Gole" />
-      </button>
-
-      <div
-        v-else
-        :key="`${currentPageIndex}-${direction}`"
-        class="spread-shell spread-shell--page"
-        :class="{
-          'spread-shell--dragging': isDragging,
-          'turn-next': !isDragging && direction === 'next',
-          'turn-previous': !isDragging && direction === 'previous',
-        }"
-        @pointerdown="onPointerDown"
-        @pointermove="onPointerMove"
-        @pointerup="finishDrag"
-        @pointercancel="finishDrag"
-      >
+      <div ref="albumBookRef" class="album-book">
         <article
-          v-if="currentPage"
-          class="album-page album-page--spread album-page--single"
-          :style="pageStyle"
+          v-for="page in bookPages"
+          :key="page.key"
+          class="page album-book__page"
+          :class="[`album-book__page--${page.kind}`]"
+          :data-density="page.density"
         >
-          <div class="album-page__topline">
-            <span>{{ currentPage.title }}</span>
+          <div v-if="page.kind === 'cover'" class="page-content album-book__page-content">
+            <div class="album-book__cover">
+              <p class="album__title">{{ page.title }}</p>
+              <img :src="coverLogo" alt="Co Gole" />
+              <p class="album-book__subtitle">{{ page.subtitle }}</p>
+            </div>
           </div>
-          <StickerGrid :stickers="currentPage.stickers" compact @select="openSticker" />
+
+          <div v-else-if="page.kind === 'content'" class="page-content album-book__page-content">
+            <div class="album-page__topline">
+              <span>{{ page.page.title }}</span>
+              <span>{{ page.page.number }}</span>
+            </div>
+            <StickerGrid :stickers="page.page.stickers" compact @select="openSticker" />
+          </div>
+
+          <div v-else class="page-content album-book__page-content">
+            <div class="album-book__back-cover">
+              <p class="album__title">{{ page.title }}</p>
+              <p class="album-book__subtitle">{{ page.subtitle }}</p>
+            </div>
+          </div>
         </article>
       </div>
     </div>

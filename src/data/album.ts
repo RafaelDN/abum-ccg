@@ -35,7 +35,14 @@ const sampleStickers: Sticker[] = [
     image: publicAsset('stickers/sample-03.png'),
     description: publicAsset('stickers/sample-03.md'),
     status: 'ready',
-  }
+  },
+  {
+    id: 'sample-03',
+    title: 'Realmatismo',
+    image: publicAsset('stickers/sample-04.png'),
+    description: publicAsset('stickers/sample-04.md'),
+    status: 'ready',
+  },
 ]
 
 function createPlaceholder(pageNumber: number, stickerNumber: number): Sticker {

@@ -19,16 +19,19 @@ defineEmits<{
       class="sticker-card"
       :class="{ 'sticker-card--placeholder': sticker.status === 'placeholder' }"
     >
-      <button
+      <div
         v-if="sticker.image"
         class="sticker-card__button"
-        type="button"
+        role="button"
+        tabindex="0"
         data-sticker-action
         :aria-label="`Abrir ${sticker.title}`"
         @click="$emit('select', sticker)"
+        @keydown.enter="$emit('select', sticker)"
+        @keydown.space.prevent="$emit('select', sticker)"
       >
         <img :src="sticker.image" :alt="sticker.title" />
-      </button>
+      </div>
       <div v-else class="sticker-placeholder" aria-hidden="true">
         <span>+</span>
       </div>
