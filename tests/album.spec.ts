@@ -54,3 +54,38 @@ test('turns the page when swiping over a sticker image', async ({ page }) => {
   await expect(page.getByText('Capa')).toBeVisible()
   await expect(page.getByRole('dialog', { name: 'Nego na copa' })).toHaveCount(0)
 })
+
+test('shares only the direct sticker link', async ({ page }) => {
+  await page.goto('/')
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, 'share', {
+      configurable: true,
+      value: (data: ShareData) => {
+        window.dispatchEvent(new CustomEvent('share-data', { detail: data }))
+        return Promise.resolve()
+      },
+    })
+  })
+  const sharedDataPromise = page.evaluate(
+    () =>
+      new Promise<ShareData>((resolve) => {
+        window.addEventListener(
+          'share-data',
+          (event) => resolve((event as CustomEvent<ShareData>).detail),
+          { once: true },
+        )
+      }),
+  )
+
+  await page.getByRole('button', { name: 'Proxima pagina' }).click()
+  await page.getByRole('button', { name: 'Abrir Nego na copa' }).click()
+  await page.getByRole('button', { name: 'Compartilhar figurinha' }).click()
+
+  const sharedData = await sharedDataPromise
+  expect(sharedData).toEqual({
+    title: 'CCG-001 - Nego na copa',
+    text: 'Figurinha CCG-001: Nego na copa',
+    url: 'http://127.0.0.1:5173/?sticker=CCG-001',
+  })
+  expect('files' in sharedData).toBe(false)
+})

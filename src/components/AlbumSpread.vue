@@ -393,23 +393,6 @@ function onPopState() {
   openStickerFromUrl()
 }
 
-async function createStickerImageFile(sticker: Sticker) {
-  if (!sticker.image) return null
-
-  try {
-    const imageUrl = new URL(sticker.image, window.location.origin)
-    const response = await fetch(imageUrl)
-    if (!response.ok) return null
-
-    const blob = await response.blob()
-    const extension = blob.type.split('/')[1] || 'png'
-
-    return new File([blob], `${sticker.code}.${extension}`, { type: blob.type })
-  } catch {
-    return null
-  }
-}
-
 function copyShareLink(url: string) {
   if (navigator.clipboard) {
     return navigator.clipboard.writeText(url)
@@ -437,21 +420,11 @@ async function shareSelectedSticker() {
 
   try {
     if (navigator.share) {
-      const baseShareData: ShareData = {
+      await navigator.share({
         title: `${sticker.code} - ${sticker.title}`,
         text: `Figurinha ${sticker.code}: ${sticker.title}`,
         url,
-      }
-      const imageFile = await createStickerImageFile(sticker)
-      const imageShareData: ShareData = imageFile
-        ? { ...baseShareData, files: [imageFile] }
-        : baseShareData
-
-      if (imageFile && navigator.canShare?.(imageShareData)) {
-        await navigator.share(imageShareData)
-      } else {
-        await navigator.share(baseShareData)
-      }
+      })
 
       shareStatus.value = 'Compartilhamento aberto.'
       return
