@@ -60,6 +60,7 @@ const pageGestureTapTolerance = 12
 let pageGestureStart: {
   pointerId: number
   pageIndex: number
+  startedOnStickerAction: boolean
   x: number
   y: number
 } | null = null
@@ -208,19 +209,25 @@ function goToNextSpread() {
 function shouldIgnorePageGesture(target: EventTarget | null) {
   if (!(target instanceof Element)) return false
 
-  return Boolean(target.closest('a, button, input, select, textarea, [data-sticker-action]'))
+  return Boolean(target.closest('a, button, input, select, textarea'))
 }
 
 function capturePageGesture(event: PointerEvent) {
   if (event.pointerType === 'mouse' && event.button !== 0) return
   if (shouldIgnorePageGesture(event.target)) return
 
+  const startedOnStickerAction =
+    event.target instanceof Element && Boolean(event.target.closest('[data-sticker-action]'))
+
   pageGestureStart = {
     pointerId: event.pointerId,
     pageIndex: currentPageIndex.value,
+    startedOnStickerAction,
     x: event.clientX,
     y: event.clientY,
   }
+
+  if (startedOnStickerAction) return
 
   try {
     const stage = event.currentTarget as HTMLElement
@@ -254,6 +261,10 @@ function finishPageGesture(event: PointerEvent) {
   if (isHorizontalSwipe) {
     event.preventDefault()
 
+    if (gesture.startedOnStickerAction) {
+      suppressStickerClickAfterSwipe()
+    }
+
     if (deltaX < 0) {
       goToNextSpread()
     } else {
@@ -277,6 +288,12 @@ function cancelPageGesture(event: PointerEvent) {
 
   pageGestureStart = null
   releasePageGestureCapture(event)
+}
+
+function suppressStickerClickAfterSwipe() {
+  if (typeof window === 'undefined') return
+
+  window.dispatchEvent(new CustomEvent('album-swipe-on-sticker'))
 }
 
 function getStickerShareUrl(sticker: Sticker) {

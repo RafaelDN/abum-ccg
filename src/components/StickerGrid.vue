@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onBeforeUnmount, onMounted } from 'vue'
 import { rarityLabels } from '../data/album'
 import type { Sticker } from '../data/album'
 
@@ -15,6 +16,7 @@ const tapMoveTolerance = 14
 const tapDurationLimit = 450
 const touchStarts = new Map<string, { x: number; y: number; startedAt: number }>()
 let lastTouchSelectAt = 0
+let suppressStickerClickUntil = 0
 
 function selectSticker(sticker: Sticker) {
   if (sticker.status === 'placeholder') return
@@ -23,6 +25,7 @@ function selectSticker(sticker: Sticker) {
 }
 
 function selectStickerFromClick(sticker: Sticker) {
+  if (Date.now() < suppressStickerClickUntil) return
   if (Date.now() - lastTouchSelectAt < 500) return
 
   selectSticker(sticker)
@@ -63,6 +66,18 @@ function stickerStyle(sticker: Sticker) {
     '--sticker-rotation': `${sticker.tilt ?? 0}deg`,
   }
 }
+
+function suppressStickerClick() {
+  suppressStickerClickUntil = Date.now() + 650
+}
+
+onMounted(() => {
+  window.addEventListener('album-swipe-on-sticker', suppressStickerClick)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('album-swipe-on-sticker', suppressStickerClick)
+})
 </script>
 
 <template>

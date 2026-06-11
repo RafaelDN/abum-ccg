@@ -563,10 +563,6 @@ button {
   animation: floatingSticker 4.8s ease-in-out infinite;
 }
 
-.sticker-modal__tilt:hover {
-  animation-play-state: paused;
-}
-
 .sticker-modal__tilt img {
   width: 100%;
   height: 100%;
