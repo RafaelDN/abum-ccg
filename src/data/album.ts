@@ -1,8 +1,14 @@
+export type StickerRarity = 'common' | 'rare' | 'legendary' | 'shiny' | 'limited'
+
 export type Sticker = {
   id: string
+  number: number
+  code: string
   title: string
   image?: string
   description?: string
+  rarity?: StickerRarity
+  tilt?: number
   status: 'ready' | 'placeholder'
 }
 
@@ -13,62 +19,97 @@ export type AlbumPage = {
 }
 
 const publicAsset = (path: string) => `${import.meta.env.BASE_URL}${path}`
+const stickerCode = (number: number) => `CCG-${String(number).padStart(3, '0')}`
+
+export const rarityLabels: Record<StickerRarity, string> = {
+  common: 'Comum',
+  rare: 'Rara',
+  legendary: 'Lendária',
+  shiny: 'Brilhante',
+  limited: 'Edição limitada',
+}
 
 const sampleStickers: Sticker[] = [
   {
     id: 'sample-01',
+    number: 1,
+    code: stickerCode(1),
     title: 'Nego na copa',
     image: publicAsset('stickers/sample-01.jpeg'),
     description: publicAsset('stickers/sample-01.md'),
+    rarity: 'common',
+    tilt: -1.2,
     status: 'ready',
   },
   {
     id: 'sample-02',
+    number: 2,
+    code: stickerCode(2),
     title: 'Jeff Crash',
     image: publicAsset('stickers/sample-02.jpeg'),
     description: publicAsset('stickers/sample-02.md'),
+    rarity: 'rare',
+    tilt: 0.9,
     status: 'ready',
   },
   {
     id: 'sample-03',
+    number: 5,
+    code: stickerCode(5),
     title: 'Rubão 13',
     image: publicAsset('stickers/sample-03.png'),
     description: publicAsset('stickers/sample-03.md'),
+    rarity: 'legendary',
+    tilt: -0.7,
     status: 'ready',
   },
   {
-    id: 'sample-03',
+    id: 'sample-04',
+    number: 6,
+    code: stickerCode(6),
     title: 'Realmatismo',
     image: publicAsset('stickers/sample-04.png'),
     description: publicAsset('stickers/sample-04.md'),
+    rarity: 'limited',
+    tilt: 1.1,
+    status: 'ready',
+  },
+  {
+    id: 'sample-05',
+    number: 7,
+    code: stickerCode(7),
+    title: 'Realmatismo',
+    image: publicAsset('stickers/sample-05.png'),
+    description: publicAsset('stickers/sample-05.md'),
+    rarity: 'rare',
+    tilt: -0.8,
     status: 'ready',
   },
 ]
 
-function createPlaceholder(pageNumber: number, stickerNumber: number): Sticker {
+function createPlaceholder(stickerNumber: number): Sticker {
   return {
-    id: `placeholder-p${pageNumber}-s${stickerNumber}`,
-    title: 'Nova figurinha',
+    id: `placeholder-${stickerCode(stickerNumber)}`,
+    number: stickerNumber,
+    code: stickerCode(stickerNumber),
+    title: 'Ainda não revelada',
+    tilt: stickerNumber % 2 === 0 ? 0.6 : -0.5,
     status: 'placeholder',
   }
 }
 
 const stickersPerPage = 4
+const sampleStickerByNumber = new Map(sampleStickers.map((sticker) => [sticker.number, sticker]))
+const maxStickerNumber = Math.max(...sampleStickers.map((sticker) => sticker.number))
+const pageCount = Math.ceil(maxStickerNumber / stickersPerPage)
 
-export const albumPages: AlbumPage[] = Array.from(
-  { length: Math.ceil(sampleStickers.length / stickersPerPage) },
-  (_, pageIndex) => {
+export const albumPages: AlbumPage[] = Array.from({ length: pageCount }, (_, pageIndex) => {
   const pageNumber = pageIndex + 1
-  const pageStickers = sampleStickers.slice(
-    pageIndex * stickersPerPage,
-    pageIndex * stickersPerPage + stickersPerPage,
-  )
+  const firstStickerNumber = pageIndex * stickersPerPage + 1
   const stickers = Array.from({ length: stickersPerPage }, (_, stickerIndex) => {
-    if (stickerIndex < pageStickers.length) {
-      return pageStickers[stickerIndex]
-    }
+    const stickerNumber = firstStickerNumber + stickerIndex
 
-    return createPlaceholder(pageNumber, stickerIndex + 1)
+    return sampleStickerByNumber.get(stickerNumber) ?? createPlaceholder(stickerNumber)
   })
 
   return {
@@ -76,5 +117,4 @@ export const albumPages: AlbumPage[] = Array.from(
     title: `Pagina ${pageNumber}`,
     stickers,
   }
-  },
-)
+}).filter((page) => page.stickers.some((sticker) => sticker.status === 'ready'))

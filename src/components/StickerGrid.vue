@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { rarityLabels } from '../data/album'
 import type { Sticker } from '../data/album'
 
 defineProps<{
@@ -16,6 +17,8 @@ const touchStarts = new Map<string, { x: number; y: number; startedAt: number }>
 let lastTouchSelectAt = 0
 
 function selectSticker(sticker: Sticker) {
+  if (sticker.status === 'placeholder') return
+
   emit('select', sticker)
 }
 
@@ -54,6 +57,12 @@ function selectStickerFromTouch(sticker: Sticker, event: TouchEvent) {
   lastTouchSelectAt = Date.now()
   selectSticker(sticker)
 }
+
+function stickerStyle(sticker: Sticker) {
+  return {
+    '--sticker-rotation': `${sticker.tilt ?? 0}deg`,
+  }
+}
 </script>
 
 <template>
@@ -62,7 +71,11 @@ function selectStickerFromTouch(sticker: Sticker, event: TouchEvent) {
       v-for="sticker in stickers"
       :key="sticker.id"
       class="sticker-card"
-      :class="{ 'sticker-card--placeholder': sticker.status === 'placeholder' }"
+      :class="[
+        { 'sticker-card--placeholder': sticker.status === 'placeholder' },
+        sticker.rarity ? `sticker-card--rarity-${sticker.rarity}` : '',
+      ]"
+      :style="stickerStyle(sticker)"
     >
       <div
         v-if="sticker.image"
@@ -77,12 +90,23 @@ function selectStickerFromTouch(sticker: Sticker, event: TouchEvent) {
         @touchstart="rememberStickerTouch(sticker, $event)"
         @touchend="selectStickerFromTouch(sticker, $event)"
       >
+        <span class="sticker-card__code">{{ sticker.code }}</span>
+        <span v-if="sticker.rarity" class="sticker-card__badge">
+          {{ rarityLabels[sticker.rarity] }}
+        </span>
         <img :src="sticker.image" :alt="sticker.title" />
       </div>
-      <div v-else class="sticker-placeholder" aria-hidden="true">
-        <span>+</span>
+      <div v-else class="sticker-placeholder" :aria-label="`${sticker.code} ainda não revelada`">
+        <span class="sticker-placeholder__code">{{ sticker.code }}</span>
+        <span class="sticker-placeholder__frame" aria-hidden="true">
+          <span class="sticker-placeholder__silhouette"></span>
+        </span>
+        <span class="sticker-placeholder__text">Ainda não revelada</span>
       </div>
-      <figcaption>{{ sticker.title }}</figcaption>
+      <figcaption>
+        <span>{{ sticker.title }}</span>
+        <small>{{ sticker.code }}</small>
+      </figcaption>
     </figure>
   </div>
 </template>
