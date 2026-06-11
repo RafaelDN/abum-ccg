@@ -1,1 +1,1 @@
-Compromisso co gole de sábado, só que na quinta.
+Um caso, um caximbo e um gole... Cadê didi dedé?
