@@ -9,7 +9,7 @@ test('shows physical sticker metadata and opens a shareable sticker link', async
   await nextPageButton.click()
 
   await expect(page.getByText('CCG-001').first()).toBeVisible()
-  await expect(page.getByText('Comum')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Abrir Nego na copa' }).getByText('Comum')).toBeVisible()
   await expect(page.getByText('CCG-003').first()).toBeVisible()
   await expect(page.getByText('Ainda não revelada').first()).toBeVisible()
 
@@ -29,6 +29,50 @@ test('opens a sticker directly from its shared code url', async ({ page }) => {
   await expect(dialog).toBeVisible()
   await expect(dialog.getByText('CCG-005')).toBeVisible()
   await expect(dialog.getByText('Lendária')).toBeVisible()
+})
+
+test('reveals an unseen sticker once and remembers it locally', async ({ page }) => {
+  await page.goto('/')
+
+  await page.getByRole('button', { name: 'Proxima pagina' }).click()
+
+  const concealedSticker = page.getByRole('button', { name: 'Virar Sono dos justos' })
+  await expect(concealedSticker).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Abrir Sono dos justos' })).toHaveCount(0)
+
+  await concealedSticker.click()
+
+  const dialog = page.getByRole('dialog', { name: 'Sono dos justos' })
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByRole('button', { name: 'Virar Sono dos justos' })).toHaveCount(0)
+  await expect(dialog.getByRole('img', { name: 'Sono dos justos' })).toBeVisible()
+  await expect
+    .poll(() => page.evaluate(() => window.localStorage.getItem('album-ccg.seen-stickers.v1')))
+    .toContain('sample-07')
+
+  await dialog.getByRole('button', { name: 'Fechar' }).click()
+  await page.reload()
+  await page.getByRole('button', { name: 'Proxima pagina' }).click()
+
+  await expect(page.getByRole('button', { name: 'Abrir Sono dos justos' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Virar Sono dos justos' })).toHaveCount(0)
+})
+
+test('keeps a direct linked reveal sticker concealed inside the modal until clicked', async ({ page }) => {
+  await page.goto('/?sticker=CCG-003')
+
+  const dialog = page.getByRole('dialog', { name: 'Sono dos justos' })
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByRole('button', { name: 'Virar Sono dos justos' })).toBeVisible()
+  await expect(dialog.getByRole('img', { name: 'Sono dos justos' })).toHaveCount(0)
+
+  await dialog.getByRole('button', { name: 'Virar Sono dos justos' }).click()
+
+  await expect(dialog.getByRole('button', { name: 'Virar Sono dos justos' })).toHaveCount(0)
+  await expect(dialog.getByRole('img', { name: 'Sono dos justos' })).toBeVisible()
+  await expect
+    .poll(() => page.evaluate(() => window.localStorage.getItem('album-ccg.seen-stickers.v1')))
+    .toContain('sample-07')
 })
 
 test('turns the page when swiping over a sticker image', async ({ page }) => {

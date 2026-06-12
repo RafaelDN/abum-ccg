@@ -8,6 +8,7 @@ export type Sticker = {
   image?: string
   description?: string
   rarity?: StickerRarity
+  revealOnFirstView?: boolean
   tilt?: number
   status: 'ready' | 'placeholder'
 }
@@ -105,6 +106,7 @@ const sampleStickers: Sticker[] = [
     image: publicAsset('stickers/sample-07.png'),
     description: publicAsset('stickers/sample-07.md'),
     rarity: 'legendary',
+    revealOnFirstView: true,
     tilt: 0.7,
     status: 'ready',
   },

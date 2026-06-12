@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, markRaw, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
+import { computed, markRaw, nextTick, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
 import type { FlipSetting, PageFlip } from 'page-flip'
+import featureFlags from '../data/feature-flags.json'
 import { rarityLabels } from '../data/album'
 import type { AlbumPage, Sticker } from '../data/album'
 import StickerGrid from './StickerGrid.vue'
@@ -51,11 +52,18 @@ const shareStatus = ref('')
 const modalTiltX = ref(0)
 const modalTiltY = ref(0)
 const isTiltingSticker = ref(false)
+const isRevealingSticker = ref(false)
+const seenStickerIds = ref<Set<string>>(new Set())
+const isRevealStateReady = ref(false)
 const albumBookRef = ref<HTMLElement | null>(null)
 const pageFlip = shallowRef<PageFlip | null>(null)
 const coverLogo = `${import.meta.env.BASE_URL}logo-co-gole.svg`
+const stickerRevealFeature = featureFlags.stickerReveal
 const pageGestureThreshold = 54
 const pageGestureTapTolerance = 12
+const revealAnimationDurationMs = 900
+
+let revealTimer: ReturnType<typeof setTimeout> | null = null
 
 let pageGestureStart: {
   pointerId: number
@@ -110,6 +118,9 @@ const bookPages = computed<BookPage[]>(() => {
 })
 
 const allStickers = computed(() => props.pages.flatMap((page) => page.stickers))
+const concealedStickerIds = computed(() =>
+  allStickers.value.filter((sticker) => isStickerConcealed(sticker)).map((sticker) => sticker.id),
+)
 const canGoBack = computed(() => currentPageIndex.value > 0)
 const canGoForward = computed(() => currentPageIndex.value < pageCount.value - 1)
 const pageCounter = computed(() => {
@@ -129,6 +140,9 @@ const selectedStickerRarityLabel = computed(() => {
 
   return rarity ? rarityLabels[rarity] : ''
 })
+const isSelectedStickerConcealed = computed(() =>
+  selectedSticker.value ? isStickerConcealed(selectedSticker.value) : false,
+)
 
 function getBookPages(): HTMLElement[] {
   const bookRoot = albumBookRef.value
@@ -296,6 +310,85 @@ function suppressStickerClickAfterSwipe() {
   window.dispatchEvent(new CustomEvent('album-swipe-on-sticker'))
 }
 
+function isStickerConcealed(sticker: Sticker) {
+  return (
+    stickerRevealFeature.enabled &&
+    isRevealStateReady.value &&
+    sticker.status === 'ready' &&
+    Boolean(sticker.revealOnFirstView) &&
+    !seenStickerIds.value.has(sticker.id)
+  )
+}
+
+function getStoredSeenStickerIds() {
+  if (typeof window === 'undefined') return new Set<string>()
+
+  try {
+    const storedValue = window.localStorage.getItem(stickerRevealFeature.storageKey)
+    const parsedValue: unknown = storedValue ? JSON.parse(storedValue) : []
+    const stickerIds = Array.isArray(parsedValue)
+      ? parsedValue.filter((id) => typeof id === 'string')
+      : []
+
+    return new Set(stickerIds)
+  } catch {
+    return new Set<string>()
+  }
+}
+
+function persistSeenStickerIds(nextSeenStickerIds: Set<string>) {
+  if (typeof window === 'undefined') return
+
+  try {
+    window.localStorage.setItem(
+      stickerRevealFeature.storageKey,
+      JSON.stringify([...nextSeenStickerIds]),
+    )
+  } catch {
+    // Storage can be unavailable in private or restricted browser modes.
+  }
+}
+
+function markStickerSeen(sticker: Sticker) {
+  const nextSeenStickerIds = new Set(seenStickerIds.value)
+  nextSeenStickerIds.add(sticker.id)
+  seenStickerIds.value = nextSeenStickerIds
+  persistSeenStickerIds(nextSeenStickerIds)
+}
+
+function clearRevealTimer() {
+  if (!revealTimer) return
+
+  clearTimeout(revealTimer)
+  revealTimer = null
+}
+
+function revealSelectedSticker() {
+  const sticker = selectedSticker.value
+  if (!sticker || !isStickerConcealed(sticker) || isRevealingSticker.value) return
+
+  isRevealingSticker.value = true
+  clearRevealTimer()
+
+  if (typeof window === 'undefined') {
+    markStickerSeen(sticker)
+    isRevealingSticker.value = false
+    return
+  }
+
+  revealTimer = window.setTimeout(() => {
+    markStickerSeen(sticker)
+    isRevealingSticker.value = false
+    revealTimer = null
+  }, revealAnimationDurationMs)
+}
+
+function syncSeenStickersFromStorage(event: StorageEvent) {
+  if (event.key !== stickerRevealFeature.storageKey && event.key !== null) return
+
+  seenStickerIds.value = getStoredSeenStickerIds()
+}
+
 function getStickerShareUrl(sticker: Sticker) {
   if (typeof window === 'undefined') return ''
 
@@ -333,9 +426,14 @@ function flipToStickerPage(sticker: Sticker) {
   }
 }
 
-async function openSticker(sticker: Sticker, options: { updateUrl?: boolean } = {}) {
+async function openSticker(
+  sticker: Sticker,
+  options: { updateUrl?: boolean; autoReveal?: boolean } = {},
+) {
   if (sticker.status === 'placeholder') return
 
+  clearRevealTimer()
+  isRevealingSticker.value = false
   selectedSticker.value = sticker
   descriptionContent.value = 'Carregando descricao...'
   shareStatus.value = ''
@@ -345,6 +443,12 @@ async function openSticker(sticker: Sticker, options: { updateUrl?: boolean } = 
   }
 
   flipToStickerPage(sticker)
+
+  if (options.autoReveal) {
+    void nextTick(() => {
+      revealSelectedSticker()
+    })
+  }
 
   if (!sticker.description) {
     descriptionContent.value = 'Descricao ainda nao cadastrada.'
@@ -361,13 +465,19 @@ async function openSticker(sticker: Sticker, options: { updateUrl?: boolean } = 
   }
 }
 
+function openStickerForReveal(sticker: Sticker) {
+  void openSticker(sticker, { autoReveal: true })
+}
+
 function closeSticker(options: { updateUrl?: boolean } = {}) {
+  clearRevealTimer()
   selectedSticker.value = null
   descriptionContent.value = ''
   shareStatus.value = ''
   modalTiltX.value = 0
   modalTiltY.value = 0
   isTiltingSticker.value = false
+  isRevealingSticker.value = false
 
   if (options.updateUrl !== false) {
     clearStickerUrl()
@@ -464,12 +574,17 @@ function resetModalTilt() {
 }
 
 onMounted(() => {
+  seenStickerIds.value = getStoredSeenStickerIds()
+  isRevealStateReady.value = true
   window.addEventListener('popstate', onPopState)
+  window.addEventListener('storage', syncSeenStickersFromStorage)
   void bindPageFlip().then(openStickerFromUrl)
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('popstate', onPopState)
+  window.removeEventListener('storage', syncSeenStickersFromStorage)
+  clearRevealTimer()
   pageFlip.value?.destroy()
   pageFlip.value = null
 })
@@ -520,7 +635,13 @@ onBeforeUnmount(() => {
               <span>{{ page.page.title }}</span>
               <span>{{ page.page.number }}</span>
             </div>
-            <StickerGrid :stickers="page.page.stickers" compact @select="openSticker" />
+            <StickerGrid
+              :stickers="page.page.stickers"
+              :concealed-sticker-ids="concealedStickerIds"
+              compact
+              @select="openSticker"
+              @reveal="openStickerForReveal"
+            />
           </div>
 
           <div v-else class="page-content album-book__page-content">
@@ -547,7 +668,28 @@ onBeforeUnmount(() => {
         </button>
 
         <div class="sticker-modal__figure">
+          <button
+            v-if="isSelectedStickerConcealed"
+            class="sticker-modal__reveal"
+            :class="{ 'sticker-modal__reveal--flipping': isRevealingSticker }"
+            type="button"
+            :disabled="isRevealingSticker"
+            :aria-label="`Virar ${selectedSticker.title}`"
+            @click="revealSelectedSticker"
+          >
+            <span class="sticker-modal__reveal-card">
+              <span class="sticker-modal__reveal-side sticker-modal__reveal-side--back">
+                <span class="sticker-modal__reveal-code">{{ selectedSticker.code }}</span>
+                <img class="sticker-modal__reveal-logo" :src="coverLogo" alt="" />
+                <span class="sticker-modal__reveal-hint">Virar</span>
+              </span>
+              <span class="sticker-modal__reveal-side sticker-modal__reveal-side--front" aria-hidden="true">
+                <img v-if="selectedSticker.image" :src="selectedSticker.image" alt="" />
+              </span>
+            </span>
+          </button>
           <div
+            v-else
             class="sticker-modal__tilt"
             :style="modalStickerStyle"
             @pointermove="onModalStickerMove"

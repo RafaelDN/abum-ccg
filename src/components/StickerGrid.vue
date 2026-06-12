@@ -3,23 +3,30 @@ import { onBeforeUnmount, onMounted } from 'vue'
 import { rarityLabels } from '../data/album'
 import type { Sticker } from '../data/album'
 
-defineProps<{
+const props = defineProps<{
   stickers: Sticker[]
   compact?: boolean
+  concealedStickerIds?: string[]
 }>()
 
 const emit = defineEmits<{
   select: [sticker: Sticker]
+  reveal: [sticker: Sticker]
 }>()
 
 const tapMoveTolerance = 14
 const tapDurationLimit = 450
 const touchStarts = new Map<string, { x: number; y: number; startedAt: number }>()
+const stickerBackLogo = `${import.meta.env.BASE_URL}logo-co-gole.svg`
 let lastTouchSelectAt = 0
 let suppressStickerClickUntil = 0
 
 function selectSticker(sticker: Sticker) {
   if (sticker.status === 'placeholder') return
+  if (isStickerConcealed(sticker)) {
+    emit('reveal', sticker)
+    return
+  }
 
   emit('select', sticker)
 }
@@ -67,6 +74,10 @@ function stickerStyle(sticker: Sticker) {
   }
 }
 
+function isStickerConcealed(sticker: Sticker) {
+  return Boolean(props.concealedStickerIds?.includes(sticker.id))
+}
+
 function suppressStickerClick() {
   suppressStickerClickUntil = Date.now() + 650
 }
@@ -88,6 +99,7 @@ onBeforeUnmount(() => {
       class="sticker-card"
       :class="[
         { 'sticker-card--placeholder': sticker.status === 'placeholder' },
+        { 'sticker-card--concealed': isStickerConcealed(sticker) },
         sticker.rarity ? `sticker-card--rarity-${sticker.rarity}` : '',
       ]"
       :style="stickerStyle(sticker)"
@@ -98,18 +110,30 @@ onBeforeUnmount(() => {
         role="button"
         tabindex="0"
         data-sticker-action
-        :aria-label="`Abrir ${sticker.title}`"
+        :class="{ 'sticker-card__button--concealed': isStickerConcealed(sticker) }"
+        :aria-label="
+          isStickerConcealed(sticker) ? `Virar ${sticker.title}` : `Abrir ${sticker.title}`
+        "
         @click="selectStickerFromClick(sticker)"
         @keydown.enter="selectSticker(sticker)"
         @keydown.space.prevent="selectSticker(sticker)"
         @touchstart="rememberStickerTouch(sticker, $event)"
         @touchend="selectStickerFromTouch(sticker, $event)"
       >
-        <span class="sticker-card__code">{{ sticker.code }}</span>
-        <span v-if="sticker.rarity" class="sticker-card__badge">
-          {{ rarityLabels[sticker.rarity] }}
-        </span>
-        <img :src="sticker.image" :alt="sticker.title" />
+        <template v-if="isStickerConcealed(sticker)">
+          <span class="sticker-card__reveal-back" aria-hidden="true">
+            <span class="sticker-card__reveal-code">{{ sticker.code }}</span>
+            <img class="sticker-card__reveal-logo" :src="stickerBackLogo" alt="" />
+          </span>
+          <span class="sticker-card__reveal-hint">Virar</span>
+        </template>
+        <template v-else>
+          <span class="sticker-card__code">{{ sticker.code }}</span>
+          <span v-if="sticker.rarity" class="sticker-card__badge">
+            {{ rarityLabels[sticker.rarity] }}
+          </span>
+          <img :src="sticker.image" :alt="sticker.title" />
+        </template>
       </div>
       <div v-else class="sticker-placeholder" :aria-label="`${sticker.code} ainda não revelada`">
         <span class="sticker-placeholder__code">{{ sticker.code }}</span>

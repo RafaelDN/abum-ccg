@@ -1,0 +1,6 @@
+{
+  "stickerReveal": {
+    "enabled": true,
+    "storageKey": "album-ccg.seen-stickers.v1"
+  }
+}
