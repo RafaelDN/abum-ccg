@@ -97,6 +97,17 @@ const sampleStickers: Sticker[] = [
     tilt: -0.4,
     status: 'ready',
   },
+   {
+    id: 'sample-07',
+    number: 3,
+    code: stickerCode(3),
+    title: 'Sono dos justos',
+    image: publicAsset('stickers/sample-07.png'),
+    description: publicAsset('stickers/sample-07.md'),
+    rarity: 'legendary',
+    tilt: 0.7,
+    status: 'ready',
+  },
 ]
 
 function createPlaceholder(stickerNumber: number): Sticker {
