@@ -44,6 +44,12 @@ test('reveals an unseen sticker once and remembers it locally', async ({ page })
 
   const dialog = page.getByRole('dialog', { name: 'Sono dos justos' })
   await expect(dialog).toBeVisible()
+  await expect(dialog.getByRole('button', { name: 'Virar Sono dos justos' })).toBeVisible()
+  await expect(dialog.getByRole('img', { name: 'Sono dos justos' })).toHaveCount(0)
+  await expect(page.evaluate(() => window.localStorage.getItem('album-ccg.seen-stickers.v1'))).resolves.toBeNull()
+
+  await dialog.getByRole('button', { name: 'Virar Sono dos justos' }).click()
+
   await expect(dialog.getByRole('button', { name: 'Virar Sono dos justos' })).toHaveCount(0)
   await expect(dialog.getByRole('img', { name: 'Sono dos justos' })).toBeVisible()
   await expect

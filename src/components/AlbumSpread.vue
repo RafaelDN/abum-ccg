@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, markRaw, nextTick, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
+import { computed, markRaw, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
 import type { FlipSetting, PageFlip } from 'page-flip'
 import featureFlags from '../data/feature-flags.json'
 import { rarityLabels } from '../data/album'
@@ -426,10 +426,7 @@ function flipToStickerPage(sticker: Sticker) {
   }
 }
 
-async function openSticker(
-  sticker: Sticker,
-  options: { updateUrl?: boolean; autoReveal?: boolean } = {},
-) {
+async function openSticker(sticker: Sticker, options: { updateUrl?: boolean } = {}) {
   if (sticker.status === 'placeholder') return
 
   clearRevealTimer()
@@ -444,12 +441,6 @@ async function openSticker(
 
   flipToStickerPage(sticker)
 
-  if (options.autoReveal) {
-    void nextTick(() => {
-      revealSelectedSticker()
-    })
-  }
-
   if (!sticker.description) {
     descriptionContent.value = 'Descricao ainda nao cadastrada.'
     return
@@ -463,10 +454,6 @@ async function openSticker(
   } catch {
     descriptionContent.value = 'Descricao ainda nao cadastrada.'
   }
-}
-
-function openStickerForReveal(sticker: Sticker) {
-  void openSticker(sticker, { autoReveal: true })
 }
 
 function closeSticker(options: { updateUrl?: boolean } = {}) {
@@ -640,7 +627,7 @@ onBeforeUnmount(() => {
               :concealed-sticker-ids="concealedStickerIds"
               compact
               @select="openSticker"
-              @reveal="openStickerForReveal"
+              @reveal="openSticker"
             />
           </div>
 

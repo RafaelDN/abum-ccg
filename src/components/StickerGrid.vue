@@ -125,7 +125,7 @@ onBeforeUnmount(() => {
             <span class="sticker-card__reveal-code">{{ sticker.code }}</span>
             <img class="sticker-card__reveal-logo" :src="stickerBackLogo" alt="" />
           </span>
-          <span class="sticker-card__reveal-hint">Virar</span>
+          <span class="sticker-card__reveal-hint">Clique para revelar a figurinha</span>
         </template>
         <template v-else>
           <span class="sticker-card__code">{{ sticker.code }}</span>
