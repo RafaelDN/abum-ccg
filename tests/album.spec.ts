@@ -31,6 +31,72 @@ test('opens a sticker directly from its shared code url', async ({ page }) => {
   await expect(dialog.getByText('Lendária')).toBeVisible()
 })
 
+test('navigates stickers in the modal with looping horizontal swipes', async ({ page }) => {
+  await page.goto('/?sticker=CCG-001')
+  await expect(page.getByRole('dialog', { name: 'Nego na copa' })).toBeVisible()
+
+  async function swipeModal(deltaX: number) {
+    const modalBox = await page.locator('.sticker-modal__figure').boundingBox()
+    expect(modalBox).not.toBeNull()
+
+    if (!modalBox) return
+
+    const startX = modalBox.x + modalBox.width / 2
+    const startY = modalBox.y + modalBox.height / 2
+
+    await page.locator('.sticker-modal').dispatchEvent('pointerdown', {
+      bubbles: true,
+      cancelable: true,
+      clientX: startX,
+      clientY: startY,
+      pointerId: 11,
+      pointerType: 'touch',
+    })
+    await page.evaluate(
+      ({ x, y }) => {
+        window.dispatchEvent(
+          new PointerEvent('pointermove', {
+            bubbles: true,
+            cancelable: true,
+            clientX: x,
+            clientY: y,
+            pointerId: 11,
+            pointerType: 'touch',
+          }),
+        )
+      },
+      { x: startX + deltaX, y: startY },
+    )
+    await page.evaluate(
+      ({ x, y }) => {
+        window.dispatchEvent(
+          new PointerEvent('pointerup', {
+            bubbles: true,
+            cancelable: true,
+            clientX: x,
+            clientY: y,
+            pointerId: 11,
+            pointerType: 'touch',
+          }),
+        )
+      },
+      { x: startX + deltaX, y: startY },
+    )
+  }
+
+  await swipeModal(-160)
+  await expect(page.getByRole('dialog', { name: 'Jeff Crash' })).toBeVisible()
+  await expect(page).toHaveURL(/sticker=CCG-002/)
+
+  await swipeModal(160)
+  await expect(page.getByRole('dialog', { name: 'Nego na copa' })).toBeVisible()
+  await expect(page).toHaveURL(/sticker=CCG-001/)
+
+  await swipeModal(160)
+  await expect(page.getByRole('dialog', { name: 'Dr Messi' })).toBeVisible()
+  await expect(page).toHaveURL(/sticker=CCG-007/)
+})
+
 test('reveals an unseen sticker once and remembers it locally', async ({ page }) => {
   await page.goto('/')
 

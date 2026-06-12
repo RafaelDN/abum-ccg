@@ -61,6 +61,7 @@ const coverLogo = `${import.meta.env.BASE_URL}logo-co-gole.svg`
 const stickerRevealFeature = featureFlags.stickerReveal
 const pageGestureThreshold = 54
 const pageGestureTapTolerance = 12
+const modalGestureThreshold = 60
 const revealAnimationDurationMs = 900
 
 let revealTimer: ReturnType<typeof setTimeout> | null = null
@@ -72,6 +73,14 @@ let pageGestureStart: {
   x: number
   y: number
 } | null = null
+
+let modalGestureStart: {
+  pointerId: number
+  x: number
+  y: number
+} | null = null
+
+const modalMouseGestureId = -1
 
 const pageFlipSettings = {
   width: 550,
@@ -118,6 +127,9 @@ const bookPages = computed<BookPage[]>(() => {
 })
 
 const allStickers = computed(() => props.pages.flatMap((page) => page.stickers))
+const readyStickers = computed(() =>
+  allStickers.value.filter((sticker) => sticker.status === 'ready'),
+)
 const concealedStickerIds = computed(() =>
   allStickers.value.filter((sticker) => isStickerConcealed(sticker)).map((sticker) => sticker.id),
 )
@@ -304,6 +316,156 @@ function cancelPageGesture(event: PointerEvent) {
   releasePageGestureCapture(event)
 }
 
+function shouldIgnoreModalGesture(target: EventTarget | null) {
+  if (!(target instanceof Element)) return false
+
+  return Boolean(target.closest('button, a, input, select, textarea'))
+}
+
+function captureModalGesture(event: PointerEvent) {
+  if (event.pointerType === 'mouse' && event.button !== 0) return
+  if (shouldIgnoreModalGesture(event.target)) return
+
+  if (modalGestureStart) {
+    modalGestureStart = null
+    clearModalGestureListeners()
+  }
+
+  modalGestureStart = {
+    pointerId: event.pointerId,
+    x: event.clientX,
+    y: event.clientY,
+  }
+
+  window.addEventListener('pointermove', moveModalGesture)
+  window.addEventListener('pointerup', finishModalGesture)
+  window.addEventListener('pointercancel', cancelModalGesture)
+  window.addEventListener('mousemove', moveModalMouseGesture)
+  window.addEventListener('mouseup', finishModalMouseGesture)
+}
+
+function clearModalGestureListeners() {
+  window.removeEventListener('pointermove', moveModalGesture)
+  window.removeEventListener('pointerup', finishModalGesture)
+  window.removeEventListener('pointercancel', cancelModalGesture)
+  window.removeEventListener('mousemove', moveModalMouseGesture)
+  window.removeEventListener('mouseup', finishModalMouseGesture)
+}
+
+function getModalGestureDirection(clientX: number, clientY: number) {
+  if (!modalGestureStart) return
+
+  const deltaX = clientX - modalGestureStart.x
+  const deltaY = clientY - modalGestureStart.y
+  const isHorizontalSwipe =
+    Math.abs(deltaX) >= modalGestureThreshold && Math.abs(deltaX) > Math.abs(deltaY) * 1.25
+
+  if (!isHorizontalSwipe) return null
+
+  return deltaX < 0 ? 1 : -1
+}
+
+function moveModalGesture(event: PointerEvent) {
+  if (modalGestureStart?.pointerId !== event.pointerId) return
+
+  const direction = getModalGestureDirection(event.clientX, event.clientY)
+  if (!direction) return
+
+  event.preventDefault()
+  modalGestureStart = null
+  clearModalGestureListeners()
+
+  openAdjacentSticker(direction)
+}
+
+function finishModalGesture(event: PointerEvent) {
+  if (modalGestureStart?.pointerId !== event.pointerId) return
+
+  const direction = getModalGestureDirection(event.clientX, event.clientY)
+
+  modalGestureStart = null
+  clearModalGestureListeners()
+
+  if (!direction) return
+
+  event.preventDefault()
+  openAdjacentSticker(direction)
+}
+
+function cancelModalGesture(event: PointerEvent) {
+  if (modalGestureStart?.pointerId !== event.pointerId) return
+
+  modalGestureStart = null
+  clearModalGestureListeners()
+}
+
+function captureModalMouseGesture(event: MouseEvent) {
+  if (!selectedSticker.value) return
+  if (event.button !== 0) return
+  if (shouldIgnoreModalGesture(event.target)) return
+
+  if (modalGestureStart) {
+    modalGestureStart = null
+    clearModalGestureListeners()
+  }
+
+  modalGestureStart = {
+    pointerId: modalMouseGestureId,
+    x: event.clientX,
+    y: event.clientY,
+  }
+
+  window.addEventListener('mousemove', moveModalMouseGesture)
+  window.addEventListener('mouseup', finishModalMouseGesture)
+}
+
+function captureWindowModalMouseGesture(event: MouseEvent) {
+  if (!selectedSticker.value) return
+  if (event.button !== 0) return
+  if (shouldIgnoreModalGesture(event.target)) return
+
+  if (modalGestureStart) {
+    modalGestureStart = null
+    clearModalGestureListeners()
+  }
+
+  modalGestureStart = {
+    pointerId: modalMouseGestureId,
+    x: event.clientX,
+    y: event.clientY,
+  }
+
+  window.addEventListener('mousemove', moveModalMouseGesture)
+  window.addEventListener('mouseup', finishModalMouseGesture)
+}
+
+function moveModalMouseGesture(event: MouseEvent) {
+  if (!modalGestureStart) return
+
+  const direction = getModalGestureDirection(event.clientX, event.clientY)
+  if (!direction) return
+
+  event.preventDefault()
+  modalGestureStart = null
+  clearModalGestureListeners()
+
+  openAdjacentSticker(direction)
+}
+
+function finishModalMouseGesture(event: MouseEvent) {
+  if (!modalGestureStart) return
+
+  const direction = getModalGestureDirection(event.clientX, event.clientY)
+
+  modalGestureStart = null
+  clearModalGestureListeners()
+
+  if (!direction) return
+
+  event.preventDefault()
+  openAdjacentSticker(direction)
+}
+
 function suppressStickerClickAfterSwipe() {
   if (typeof window === 'undefined') return
 
@@ -389,6 +551,24 @@ function syncSeenStickersFromStorage(event: StorageEvent) {
   seenStickerIds.value = getStoredSeenStickerIds()
 }
 
+function getAdjacentSticker(offset: 1 | -1) {
+  const sticker = selectedSticker.value
+  const stickers = readyStickers.value
+  if (!sticker || stickers.length === 0) return null
+
+  const currentIndex = stickers.findIndex((currentSticker) => currentSticker.id === sticker.id)
+  if (currentIndex < 0) return null
+
+  return stickers[(currentIndex + offset + stickers.length) % stickers.length] ?? null
+}
+
+function openAdjacentSticker(offset: 1 | -1) {
+  const sticker = getAdjacentSticker(offset)
+  if (!sticker) return
+
+  void openSticker(sticker, { syncPage: false })
+}
+
 function getStickerShareUrl(sticker: Sticker) {
   if (typeof window === 'undefined') return ''
 
@@ -426,7 +606,10 @@ function flipToStickerPage(sticker: Sticker) {
   }
 }
 
-async function openSticker(sticker: Sticker, options: { updateUrl?: boolean } = {}) {
+async function openSticker(
+  sticker: Sticker,
+  options: { updateUrl?: boolean; syncPage?: boolean } = {},
+) {
   if (sticker.status === 'placeholder') return
 
   clearRevealTimer()
@@ -439,20 +622,30 @@ async function openSticker(sticker: Sticker, options: { updateUrl?: boolean } = 
     updateStickerUrl(sticker)
   }
 
-  flipToStickerPage(sticker)
+  if (options.syncPage !== false) {
+    flipToStickerPage(sticker)
+  }
 
   if (!sticker.description) {
-    descriptionContent.value = 'Descricao ainda nao cadastrada.'
+    if (selectedSticker.value?.id === sticker.id) {
+      descriptionContent.value = 'Descricao ainda nao cadastrada.'
+    }
     return
   }
 
   try {
     const response = await fetch(sticker.description)
-    descriptionContent.value = response.ok
+    const nextDescription = response.ok
       ? await response.text()
       : 'Descricao ainda nao cadastrada.'
+
+    if (selectedSticker.value?.id === sticker.id) {
+      descriptionContent.value = nextDescription
+    }
   } catch {
-    descriptionContent.value = 'Descricao ainda nao cadastrada.'
+    if (selectedSticker.value?.id === sticker.id) {
+      descriptionContent.value = 'Descricao ainda nao cadastrada.'
+    }
   }
 }
 
@@ -565,12 +758,15 @@ onMounted(() => {
   isRevealStateReady.value = true
   window.addEventListener('popstate', onPopState)
   window.addEventListener('storage', syncSeenStickersFromStorage)
+  window.addEventListener('mousedown', captureWindowModalMouseGesture, true)
   void bindPageFlip().then(openStickerFromUrl)
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('popstate', onPopState)
   window.removeEventListener('storage', syncSeenStickersFromStorage)
+  window.removeEventListener('mousedown', captureWindowModalMouseGesture, true)
+  clearModalGestureListeners()
   clearRevealTimer()
   pageFlip.value?.destroy()
   pageFlip.value = null
@@ -648,6 +844,11 @@ onBeforeUnmount(() => {
       aria-modal="true"
       :aria-label="selectedSticker.title"
       @click.self="closeSticker"
+      @pointerdown.capture="captureModalGesture"
+      @pointerup.capture="finishModalGesture"
+      @pointercancel.capture="cancelModalGesture"
+      @mousedown.capture="captureModalMouseGesture"
+      @mouseup.capture="finishModalMouseGesture"
     >
       <article class="sticker-modal__panel">
         <button class="sticker-modal__close" type="button" aria-label="Fechar" @click="closeSticker">
