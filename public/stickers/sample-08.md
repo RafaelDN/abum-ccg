@@ -1,0 +1,1 @@
+"O amor é o calor que aquece a alma.."

@@ -255,6 +255,8 @@ button {
 
 .sticker-card {
   --rarity-accent: #60706d;
+  --rarity-border: #baad95;
+  --rarity-glow: rgb(55 43 27 / 0.1);
   --rarity-ink: #f9f4e9;
   display: grid;
   grid-template-rows: minmax(0, 1fr) 34px;
@@ -262,10 +264,13 @@ button {
   min-width: 0;
   margin: 0;
   overflow: hidden;
-  border: 1px solid #baad95;
+  border: 2px solid var(--rarity-border);
   border-radius: 6px;
   background: #f6efe2;
-  box-shadow: 0 7px 16px rgb(55 43 27 / 0.1);
+  box-shadow:
+    0 9px 18px rgb(55 43 27 / 0.14),
+    inset 0 0 0 2px rgb(255 250 240 / 0.48),
+    0 0 26px var(--rarity-glow);
   transform: rotate(var(--sticker-rotation, 0deg));
   transform-origin: 50% 58%;
 }
@@ -429,6 +434,9 @@ button {
   overflow: hidden;
   color: var(--rarity-ink);
   background: var(--rarity-accent);
+  box-shadow:
+    0 3px 9px rgb(0 0 0 / 0.22),
+    0 0 14px var(--rarity-glow);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -471,22 +479,46 @@ button {
 
 .sticker-card--rarity-common {
   --rarity-accent: #5d6d68;
+  --rarity-border: #9eaa9e;
+  --rarity-glow: rgb(93 109 104 / 0.18);
 }
 
 .sticker-card--rarity-rare {
   --rarity-accent: #2d6d8a;
+  --rarity-border: #27b7e6;
+  --rarity-glow: rgb(39 183 230 / 0.55);
 }
 
 .sticker-card--rarity-legendary {
   --rarity-accent: #8b5b1f;
+  --rarity-border: #f0b93d;
+  --rarity-glow: rgb(240 185 61 / 0.68);
 }
 
 .sticker-card--rarity-shiny {
   --rarity-accent: #7c658f;
+  --rarity-border: #d0b4ff;
+  --rarity-glow: rgb(187 127 255 / 0.68);
 }
 
 .sticker-card--rarity-limited {
   --rarity-accent: #8b2f3f;
+  --rarity-border: #ef4e68;
+  --rarity-glow: rgb(239 78 104 / 0.62);
+}
+
+.sticker-card--rarity-legendary {
+  box-shadow:
+    0 10px 24px rgb(55 43 27 / 0.2),
+    inset 0 0 0 3px rgb(255 238 178 / 0.82),
+    0 0 34px var(--rarity-glow);
+}
+
+.sticker-card--rarity-limited {
+  box-shadow:
+    0 10px 24px rgb(55 43 27 / 0.18),
+    inset 0 0 0 3px rgb(255 218 224 / 0.64),
+    0 0 30px var(--rarity-glow);
 }
 
 .sticker-card--rarity-shiny .sticker-card__button::after,
@@ -495,6 +527,29 @@ button {
   position: absolute;
   inset: 0;
   background: linear-gradient(110deg, transparent 12%, rgb(255 255 255 / 0.38) 44%, transparent 64%);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.sticker-card--rarity-shiny .sticker-card__button::after {
+  background: linear-gradient(
+    110deg,
+    transparent 8%,
+    rgb(95 213 220 / 0.32) 28%,
+    rgb(255 255 255 / 0.68) 45%,
+    rgb(225 164 255 / 0.36) 62%,
+    transparent 78%
+  );
+  animation: rarityShimmer 2.7s ease-in-out infinite;
+}
+
+.sticker-card--rarity-legendary .sticker-card__button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 18%, rgb(255 225 135 / 0.48), transparent 48%),
+    linear-gradient(135deg, rgb(255 255 255 / 0.18), transparent 36%);
   mix-blend-mode: screen;
   pointer-events: none;
 }
@@ -586,6 +641,9 @@ button {
 }
 
 .sticker-modal__panel {
+  --modal-rarity-accent: #60706d;
+  --modal-rarity-border: #d7c8ad;
+  --modal-rarity-glow: rgb(55 43 27 / 0.18);
   position: relative;
   display: grid;
   grid-template-columns: 1fr;
@@ -594,11 +652,52 @@ button {
   max-height: min(720px, calc(100svh - 24px));
   padding: 18px;
   overflow: auto;
-  border: 1px solid #d7c8ad;
+  border: 2px solid var(--modal-rarity-border);
   border-radius: 8px;
   background: #fffaf0;
-  box-shadow: 0 34px 80px rgb(0 0 0 / 0.34);
+  box-shadow:
+    0 34px 80px rgb(0 0 0 / 0.34),
+    0 0 52px var(--modal-rarity-glow);
   touch-action: pan-y;
+}
+
+.sticker-modal__panel--rarity-common {
+  --modal-rarity-accent: #5d6d68;
+  --modal-rarity-border: #c7d1c8;
+  --modal-rarity-glow: rgb(93 109 104 / 0.18);
+}
+
+.sticker-modal__panel--rarity-rare {
+  --modal-rarity-accent: #2d6d8a;
+  --modal-rarity-border: #27b7e6;
+  --modal-rarity-glow: rgb(39 183 230 / 0.55);
+}
+
+.sticker-modal__panel--rarity-legendary {
+  --modal-rarity-accent: #b47a26;
+  --modal-rarity-border: #f0b93d;
+  --modal-rarity-glow: rgb(240 185 61 / 0.68);
+}
+
+.sticker-modal__panel--rarity-shiny {
+  --modal-rarity-accent: #7c658f;
+  --modal-rarity-border: #d0b4ff;
+  --modal-rarity-glow: rgb(187 127 255 / 0.66);
+}
+
+.sticker-modal__panel--rarity-limited {
+  --modal-rarity-accent: #8b2f3f;
+  --modal-rarity-border: #ef4e68;
+  --modal-rarity-glow: rgb(239 78 104 / 0.62);
+}
+
+.sticker-modal__panel--rarity-legendary,
+.sticker-modal__panel--rarity-shiny,
+.sticker-modal__panel--rarity-limited {
+  box-shadow:
+    0 34px 80px rgb(0 0 0 / 0.34),
+    0 0 0 3px rgb(255 250 240 / 0.72),
+    0 0 70px var(--modal-rarity-glow);
 }
 
 .sticker-modal__close {
@@ -629,6 +728,7 @@ button {
   border-radius: 8px;
   background:
     radial-gradient(circle at 50% 22%, rgb(255 255 255 / 0.74), transparent 36%),
+    radial-gradient(circle at 50% 52%, var(--modal-rarity-glow), transparent 60%),
     #ebe2d1;
   perspective: 900px;
 }
@@ -654,16 +754,47 @@ button {
   width: min(270px, 72vw);
   aspect-ratio: 0.72 / 1;
   overflow: hidden;
-  border: 1px solid #d7c8ad;
+  border: 2px solid var(--modal-rarity-border);
   border-radius: 8px;
   background: #f6efe2;
   box-shadow:
     0 30px 54px rgb(34 29 21 / 0.34),
-    0 0 0 8px rgb(255 250 240 / 0.62);
+    0 0 0 8px rgb(255 250 240 / 0.62),
+    0 0 44px var(--modal-rarity-glow);
   transform-style: preserve-3d;
   transition: transform 140ms ease;
   will-change: transform;
   animation: floatingSticker 4.8s ease-in-out infinite;
+}
+
+.sticker-modal__panel--rarity-legendary .sticker-modal__tilt {
+  box-shadow:
+    0 30px 54px rgb(34 29 21 / 0.34),
+    0 0 0 8px rgb(255 250 240 / 0.62),
+    inset 0 0 0 4px rgb(255 228 146 / 0.86),
+    0 0 56px var(--modal-rarity-glow);
+}
+
+.sticker-modal__panel--rarity-shiny .sticker-modal__tilt::after,
+.sticker-modal__panel--rarity-limited .sticker-modal__tilt::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 6%,
+    rgb(95 213 220 / 0.34) 28%,
+    rgb(255 255 255 / 0.7) 45%,
+    rgb(225 164 255 / 0.38) 62%,
+    transparent 78%
+  );
+  mix-blend-mode: screen;
+  pointer-events: none;
+  animation: rarityShimmer 2.7s ease-in-out infinite;
+}
+
+.sticker-modal__panel--rarity-limited .sticker-modal__tilt::after {
+  background: linear-gradient(110deg, transparent 12%, rgb(255 230 220 / 0.62) 44%, transparent 68%);
 }
 
 .sticker-modal__reveal {
@@ -848,7 +979,9 @@ button {
   padding: 0 10px;
   border: 1px solid rgb(36 50 52 / 0.14);
   color: #243234;
-  background: #eee7d9;
+  border-color: var(--modal-rarity-border);
+  background: color-mix(in srgb, var(--modal-rarity-accent) 28%, #eee7d9);
+  box-shadow: 0 0 18px var(--modal-rarity-glow);
 }
 
 .sticker-modal__badge--common {
@@ -971,6 +1104,17 @@ button {
       0 0 34px rgb(87 242 255 / 0.94),
       0 0 78px rgb(117 67 255 / 0.56),
       0 30px 54px rgb(34 29 21 / 0.34);
+  }
+}
+
+@keyframes rarityShimmer {
+  0%,
+  18% {
+    transform: translateX(-130%);
+  }
+  56%,
+  100% {
+    transform: translateX(130%);
   }
 }
 

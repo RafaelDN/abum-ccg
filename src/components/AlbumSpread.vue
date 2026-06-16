@@ -850,7 +850,10 @@ onBeforeUnmount(() => {
       @mousedown.capture="captureModalMouseGesture"
       @mouseup.capture="finishModalMouseGesture"
     >
-      <article class="sticker-modal__panel">
+      <article
+        class="sticker-modal__panel"
+        :class="selectedSticker.rarity ? `sticker-modal__panel--rarity-${selectedSticker.rarity}` : ''"
+      >
         <button class="sticker-modal__close" type="button" aria-label="Fechar" @click="closeSticker">
           ×
         </button>

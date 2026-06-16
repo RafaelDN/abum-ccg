@@ -110,6 +110,30 @@ const sampleStickers: Sticker[] = [
     tilt: 0.7,
     status: 'ready',
   },
+  // {
+  //   id: 'sample-08',
+  //   number: 11,
+  //   code: stickerCode(11),
+  //   title: 'Bald love',
+  //   image: publicAsset('stickers/sample-08.png'),
+  //   description: publicAsset('stickers/sample-08.md'),
+  //   rarity: 'rare',
+  //   revealOnFirstView: true,
+  //   tilt: 0.7,
+  //   status: 'ready',
+  // },
+  {
+    id: 'sample-09',
+    number: 10,
+    code: stickerCode(10),
+    title: 'Ney <3',
+    image: publicAsset('stickers/sample-09.png'),
+    description: publicAsset('stickers/sample-09.md'),
+    rarity: 'common',
+    revealOnFirstView: true,
+    tilt: 0.2,
+    status: 'ready',
+  },
 ]
 
 function createPlaceholder(stickerNumber: number): Sticker {
