@@ -902,9 +902,20 @@ onBeforeUnmount(() => {
             </span>
           </div>
           <h2>{{ selectedSticker.title }}</h2>
-          <button class="sticker-modal__share" type="button" @click="shareSelectedSticker">
-            Compartilhar figurinha
-          </button>
+          <div class="sticker-modal__actions">
+            <button class="sticker-modal__share" type="button" @click="shareSelectedSticker">
+              Compartilhar figurinha
+            </button>
+            <a
+              v-if="selectedSticker.image"
+              class="sticker-modal__open-image"
+              :href="selectedSticker.image"
+              target="_blank"
+              rel="noopener"
+            >
+              Abrir imagem
+            </a>
+          </div>
           <p v-if="shareStatus" class="sticker-modal__share-status" aria-live="polite">
             {{ shareStatus }}
           </p>

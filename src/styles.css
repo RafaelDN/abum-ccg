@@ -1014,11 +1014,18 @@ button {
   line-height: 1;
 }
 
-.sticker-modal__share {
+.sticker-modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 12px;
+}
+
+.sticker-modal__share,
+.sticker-modal__open-image {
   display: inline-grid;
   min-height: 42px;
   place-items: center;
-  margin: 0 0 12px;
   padding: 0 14px;
   border: 1px solid #243234;
   border-radius: 8px;
@@ -1026,10 +1033,18 @@ button {
   background: #243234;
   font-size: 0.88rem;
   font-weight: 900;
+  line-height: 1;
+  text-decoration: none;
   cursor: pointer;
 }
 
-.sticker-modal__share:focus-visible {
+.sticker-modal__open-image {
+  color: #243234;
+  background: #f7f2e7;
+}
+
+.sticker-modal__share:focus-visible,
+.sticker-modal__open-image:focus-visible {
   outline: 3px solid #2f7e87;
   outline-offset: 3px;
 }

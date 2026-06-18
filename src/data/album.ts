@@ -62,8 +62,7 @@ const sampleStickers: Sticker[] = [
     description: publicAsset('stickers/sample-03.md'),
     rarity: 'legendary',
     tilt: -0.7,
-    status: 'ready',
-    revealOnFirstView: true,
+    status: 'ready',    
   },
   {
     id: 'sample-04',
@@ -75,7 +74,6 @@ const sampleStickers: Sticker[] = [
     rarity: 'limited',
     tilt: 1.1,
     status: 'ready',
-    revealOnFirstView: true,
   },
   {
     id: 'sample-05',
@@ -87,7 +85,6 @@ const sampleStickers: Sticker[] = [
     rarity: 'rare',
     tilt: -0.8,
     status: 'ready',
-    revealOnFirstView: true,
   },
 
   {
