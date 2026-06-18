@@ -872,7 +872,7 @@ onBeforeUnmount(() => {
               <span class="sticker-modal__reveal-side sticker-modal__reveal-side--back">
                 <span class="sticker-modal__reveal-code">{{ selectedSticker.code }}</span>
                 <img class="sticker-modal__reveal-logo" :src="coverLogo" alt="" />
-                <span class="sticker-modal__reveal-hint">Virar</span>
+                <span class="sticker-modal__reveal-hint">Clique para revelar a figurinha</span>
               </span>
               <span class="sticker-modal__reveal-side sticker-modal__reveal-side--front" aria-hidden="true">
                 <img v-if="selectedSticker.image" :src="selectedSticker.image" alt="" />

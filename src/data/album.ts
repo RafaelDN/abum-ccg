@@ -63,6 +63,7 @@ const sampleStickers: Sticker[] = [
     rarity: 'legendary',
     tilt: -0.7,
     status: 'ready',
+    revealOnFirstView: true,
   },
   {
     id: 'sample-04',
@@ -74,6 +75,7 @@ const sampleStickers: Sticker[] = [
     rarity: 'limited',
     tilt: 1.1,
     status: 'ready',
+    revealOnFirstView: true,
   },
   {
     id: 'sample-05',
@@ -85,6 +87,7 @@ const sampleStickers: Sticker[] = [
     rarity: 'rare',
     tilt: -0.8,
     status: 'ready',
+    revealOnFirstView: true,
   },
 
   {
@@ -97,6 +100,7 @@ const sampleStickers: Sticker[] = [
     rarity: 'common',
     tilt: -0.4,
     status: 'ready',
+    revealOnFirstView: true,
   },
    {
     id: 'sample-07',
@@ -130,6 +134,44 @@ const sampleStickers: Sticker[] = [
     image: publicAsset('stickers/sample-09.png'),
     description: publicAsset('stickers/sample-09.md'),
     rarity: 'common',
+    revealOnFirstView: true,
+    tilt: 0.2,
+    status: 'ready',
+  },
+  {
+    id: 'sample-10',
+    number: 12,
+    code: stickerCode(12),
+    title: 'Buuu',
+    image: publicAsset('stickers/sample-10.png'),
+    description: publicAsset('stickers/sample-10.md'),
+    rarity: 'common',
+    revealOnFirstView: true,
+    tilt: 0.9,
+    status: 'ready',
+  },
+
+  {
+    id: 'sample-11',
+    number: 9,
+    code: stickerCode(9),
+    title: 'CCG 2026',
+    image: publicAsset('stickers/sample-11.png'),
+    description: publicAsset('stickers/sample-11.md'),
+    rarity: 'limited',
+    revealOnFirstView: true,
+    tilt: -0.5,
+    status: 'ready',
+  },
+
+  {
+    id: 'sample-12',
+    number: 14,
+    code: stickerCode(14),
+    title: 'Eeeero!',
+    image: publicAsset('stickers/sample-12.png'),
+    description: publicAsset('stickers/sample-12.md'),
+    rarity: 'rare',
     revealOnFirstView: true,
     tilt: 0.2,
     status: 'ready',
