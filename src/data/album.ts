@@ -79,7 +79,7 @@ const sampleStickers: Sticker[] = [
     id: 'sample-05',
     number: 7,
     code: stickerCode(7),
-    title: 'Dr Messi',
+    title: 'Elementar',
     image: publicAsset('stickers/sample-05.png'),
     description: publicAsset('stickers/sample-05.md'),
     rarity: 'rare',
@@ -96,8 +96,7 @@ const sampleStickers: Sticker[] = [
     description: publicAsset('stickers/sample-06.md'),
     rarity: 'common',
     tilt: -0.4,
-    status: 'ready',
-    revealOnFirstView: true,
+    status: 'ready'
   },
    {
     id: 'sample-07',
