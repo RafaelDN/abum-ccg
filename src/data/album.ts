@@ -163,7 +163,6 @@ const sampleStickers: Sticker[] = [
     tilt: -0.5,
     status: 'ready',
   },
-
   {
     id: 'sample-12',
     number: 14,
@@ -174,6 +173,18 @@ const sampleStickers: Sticker[] = [
     rarity: 'rare',
     revealOnFirstView: true,
     tilt: 0.2,
+    status: 'ready',
+  },
+  {
+    id: 'sample-13',
+    number: 13,
+    code: stickerCode(13),
+    title: 'Foguete',
+    image: publicAsset('stickers/sample-13.png'),
+    description: publicAsset('stickers/sample-13.md'),
+    rarity: 'shiny',
+    revealOnFirstView: true,
+    tilt: 0.4,
     status: 'ready',
   },
 ]
