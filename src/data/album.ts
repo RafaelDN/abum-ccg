@@ -183,6 +183,18 @@ const sampleStickers: Sticker[] = [
     tilt: 0.4,
     status: 'ready',
   },
+  {
+    id: 'sample-14',
+    number: 16,
+    code: stickerCode(16),
+    title: 'Dirce prateado',
+    image: publicAsset('stickers/sample-14.png'),
+    description: publicAsset('stickers/sample-14.md'),
+    rarity: 'common',
+    revealOnFirstView: true,
+    tilt: -0.4,
+    status: 'ready',
+  },
 ]
 
 function createPlaceholder(stickerNumber: number): Sticker {
