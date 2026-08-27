@@ -195,6 +195,18 @@ const sampleStickers: Sticker[] = [
     tilt: -0.4,
     status: 'ready',
   },
+  {
+    id: 'sample-15',
+    number: 15,
+    code: stickerCode(15),
+    title: 'All-in pré flop',
+    image: publicAsset('stickers/sample-15.png'),
+    description: publicAsset('stickers/sample-15.md'),
+    rarity: 'rare',
+    revealOnFirstView: true,
+    tilt: 0.4,
+    status: 'ready',
+  },
 ]
 
 function createPlaceholder(stickerNumber: number): Sticker {
