@@ -211,7 +211,7 @@ const sampleStickers: Sticker[] = [
     id: 'sample-16',
     number: 8,
     code: stickerCode(8),
-    title: 'All-in pré flop',
+    title: 'Fera!!',
     image: publicAsset('stickers/sample-16.png'),
     description: publicAsset('stickers/sample-16.md'),
     rarity: 'shiny',
